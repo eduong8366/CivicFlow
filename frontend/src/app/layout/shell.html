@@ -1,0 +1,81 @@
+<a class="skip-link" href="#main" (click)="focusMain($event)">Skip to main content</a>
+<app-agency-banner />
+
+<header class="header">
+  @if (compact()) {
+    <button
+      type="button"
+      class="menu-button"
+      aria-label="Menu"
+      aria-controls="main-nav"
+      [attr.aria-expanded]="sidenav.opened"
+      (click)="sidenav.toggle()"
+    >
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+      </svg>
+    </button>
+  }
+  <a routerLink="/dashboard" class="brand">CivicFlow</a>
+  <span class="spacer"></span>
+
+  <form role="search" class="search" (submit)="search($event, query.value)">
+    <label for="global-search">Search</label>
+    <input
+      #query
+      id="global-search"
+      type="search"
+      placeholder="Case number, title or requester"
+      autocomplete="off"
+    />
+  </form>
+
+  @if (user(); as user) {
+    <button type="button" class="user" [matMenuTriggerFor]="userMenu">
+      <span class="user-name">{{ user.fullName }}</span>
+      <span class="user-role">{{ roleLine() }}</span>
+    </button>
+    <mat-menu #userMenu xPosition="before">
+      <div class="menu-account" aria-hidden="true">{{ user.email }}</div>
+      <button mat-menu-item type="button" (click)="signOut()">Sign out</button>
+    </mat-menu>
+  }
+</header>
+
+<mat-sidenav-container class="body">
+  <mat-sidenav
+    #sidenav
+    class="sidenav"
+    [mode]="compact() ? 'over' : 'side'"
+    [opened]="!compact()"
+    [disableClose]="!compact()"
+  >
+    <nav id="main-nav" aria-label="Main">
+      @for (section of sections(); track $index) {
+        @if (section.heading) {
+          <h2 class="nav-heading">{{ section.heading }}</h2>
+        }
+        <ul>
+          @for (item of section.items; track item.path) {
+            <li>
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                [routerLinkActiveOptions]="{ exact: item.path === '/cases' }"
+                (click)="closeIfCompact()"
+                >{{ item.label }}</a
+              >
+            </li>
+          }
+        </ul>
+      }
+    </nav>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <main #main id="main" tabindex="-1">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

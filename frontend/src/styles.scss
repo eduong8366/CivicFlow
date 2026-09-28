@@ -1,0 +1,136 @@
+@use '@angular/material' as mat;
+@use 'theme-colors' as palette;
+
+// The "Civic Standard" look: a USWDS-like navy on light grey, square corners, a serif for
+// headings over Public Sans. Fonts are self-hosted (@fontsource, see angular.json), so pages
+// make no third-party requests.
+
+:root {
+  // Tokens for the app's own components; Material components read the --mat-sys-* ones.
+  --cf-accent: #1a4480;
+  --cf-accent-dark: #162e51;
+  --cf-accent-tint: #eff6fb;
+  --cf-ink: #1b1b1b;
+  --cf-muted: #565c65; // 6.4:1 on white
+  --cf-border: #dfe1e2;
+  --cf-ground: #f0f0f0;
+  --cf-surface: #ffffff;
+  --cf-danger: #b50909;
+  --cf-warning: #e5a000;
+  --cf-success: #00a91c;
+  --cf-focus: #2491ff;
+  --cf-serif: 'Source Serif 4', Georgia, serif;
+  --cf-sans: 'Public Sans', system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: palette.$primary-palette,
+        tertiary: palette.$tertiary-palette,
+        theme-type: light,
+      ),
+      typography: (
+        plain-family: 'Public Sans',
+        brand-family: 'Source Serif 4',
+      ),
+      density: 0,
+    )
+  );
+
+  // M3's generated primary is a lighter tone of the brand navy; use the navy itself, and the
+  // near-square shapes of the design.
+  @include mat.theme-overrides(
+    (
+      primary: #1a4480,
+      on-primary: #ffffff,
+      corner-extra-small: 2px,
+      corner-small: 2px,
+      corner-medium: 2px,
+      corner-large: 4px,
+      corner-extra-large: 4px,
+      corner-full: 2px,
+    )
+  );
+
+  @media (forced-colors: active) {
+    @include palette.high-contrast-overrides(light);
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--cf-ground);
+  color: var(--cf-ink);
+  font-family: var(--cf-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+h1 {
+  font-family: var(--cf-serif);
+  font-size: 2.125rem;
+  font-weight: 700;
+}
+
+a {
+  color: var(--cf-accent);
+}
+
+a:hover {
+  color: var(--cf-accent-dark);
+}
+
+// A strong, consistent focus ring (WCAG 2.4.7), as USWDS draws it.
+:focus-visible {
+  outline: 0.25rem solid var(--cf-focus);
+  outline-offset: 0;
+}
+
+.cf-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// A bordered white section on the grey ground, the design's basic container.
+.cf-panel {
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  padding: 20px 24px;
+}
+
+// Alert boxes with a left rule, as USWDS draws them.
+.cf-alert {
+  border-left: 8px solid var(--cf-muted);
+  background: var(--cf-ground);
+  padding: 12px 16px;
+
+  &--error {
+    border-left-color: var(--cf-danger);
+    background: #f4e3db;
+  }
+
+  &--info {
+    border-left-color: var(--cf-accent);
+    background: var(--cf-accent-tint);
+  }
+}

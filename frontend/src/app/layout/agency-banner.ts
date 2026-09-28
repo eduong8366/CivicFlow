@@ -6,6 +6,11 @@ import { environment } from '../../environments/environment';
   selector: 'app-agency-banner',
   template: `<div class="banner">{{ agencyName }} · Internal case management system</div>`,
   styles: `
+    :host {
+      display: block;
+      flex-shrink: 0;
+    }
+
     .banner {
       background: var(--cf-ink);
       color: #f0f0f0;

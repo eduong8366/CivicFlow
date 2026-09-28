@@ -1,10 +1,14 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { UserRole } from '../core/auth/auth.models';
 import { storeSession, testUser } from '../core/auth/auth.testing';
 import { Shell } from './shell';
+
+@Component({ template: '' })
+class Blank {}
 
 describe('Shell', () => {
   async function render(role: UserRole): Promise<HTMLElement> {
@@ -12,7 +16,7 @@ describe('Shell', () => {
     storeSession(testUser(role));
     TestBed.configureTestingModule({
       imports: [Shell],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', component: Blank }])],
     });
     const fixture = TestBed.createComponent(Shell);
     await fixture.whenStable();
@@ -48,6 +52,21 @@ describe('Shell', () => {
 
     expect(el.querySelector('nav h2')?.textContent).toBe('Administration');
     expect(navLabels(el)).toContain('Case types');
+  });
+
+  it('moves focus to the new page, but not when only the query changes', async () => {
+    const el = await render('Staff');
+    const router = TestBed.inject(Router);
+    const main = el.querySelector<HTMLElement>('main')!;
+    const search = el.querySelector<HTMLInputElement>('#global-search')!;
+    await router.navigateByUrl('/cases');
+
+    search.focus();
+    await router.navigateByUrl('/cases?status=Open&page=2');
+    expect(document.activeElement).toBe(search);
+
+    await router.navigateByUrl('/cases/20');
+    expect(document.activeElement).toBe(main);
   });
 
   it('searches cases from the header', async () => {

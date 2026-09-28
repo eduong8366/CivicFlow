@@ -1,0 +1,204 @@
+<div class="page-head">
+  <h1>Case search</h1>
+  <a mat-flat-button routerLink="/cases/new">New case</a>
+</div>
+
+<section class="cf-panel filters" aria-labelledby="filters-heading">
+  <h2 id="filters-heading" class="cf-visually-hidden">Filters</h2>
+  <form [formGroup]="form" (ngSubmit)="applyFilters()">
+    <mat-form-field appearance="outline" class="wide" subscriptSizing="dynamic">
+      <mat-label>Keywords</mat-label>
+      <input matInput formControlName="search" type="search" maxlength="100" />
+      <mat-hint>Case number, title or requester</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Case type</mat-label>
+      <mat-select formControlName="caseTypeId">
+        <mat-option [value]="null">Any type</mat-option>
+        @for (type of caseTypes.value(); track type.id) {
+          <mat-option [value]="type.id">{{ type.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        <mat-option [value]="null">Any status</mat-option>
+        @for (status of statuses; track status.value) {
+          <mat-option [value]="status.value">{{ status.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Priority</mat-label>
+      <mat-select formControlName="priority">
+        <mat-option [value]="null">Any priority</mat-option>
+        @for (priority of priorities; track priority) {
+          <mat-option [value]="priority">{{ priority }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Department</mat-label>
+      <mat-select formControlName="departmentId">
+        <mat-option [value]="null">Any department</mat-option>
+        @for (department of departments.value(); track department.id) {
+          <mat-option [value]="department.id">{{ department.name }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Any step routed there</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Assigned to</mat-label>
+      <mat-select formControlName="assigneeId">
+        <mat-option [value]="null">Anyone</mat-option>
+        @for (user of users.value(); track user.id) {
+          <mat-option [value]="user.id">
+            {{ user.fullName }}
+            @if (user.departmentName) {
+              <span class="option-note">· {{ user.departmentName }}</span>
+            }
+          </mat-option>
+        }
+      </mat-select>
+      <mat-hint>The current step's assignee</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Opened from</mat-label>
+      <input matInput formControlName="createdFrom" type="date" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Opened to</mat-label>
+      <input matInput formControlName="createdTo" type="date" [min]="form.controls.createdFrom.value" />
+    </mat-form-field>
+
+    <mat-checkbox formControlName="overdue" class="overdue">Overdue only</mat-checkbox>
+
+    <div class="form-actions">
+      <button mat-flat-button type="submit">Search</button>
+      @if (filterCount()) {
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+      }
+    </div>
+  </form>
+</section>
+
+<section class="cf-panel results" aria-labelledby="results-heading">
+  <div class="results-head">
+    <h2 id="results-heading">Results</h2>
+    <p class="count" role="status">
+      @if (results.isLoading()) {
+        Searching…
+      } @else if (page(); as page) {
+        {{ page.totalCount }} {{ page.totalCount === 1 ? 'case' : 'cases' }}
+        @if (filterCount()) {
+          match {{ filterCount() === 1 ? 'this filter' : 'these ' + filterCount() + ' filters' }}
+        }
+      }
+    </p>
+  </div>
+
+  @if (results.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading results" />
+  }
+
+  @if (error(); as error) {
+    <div class="cf-alert cf-alert--error" role="alert">{{ error }}</div>
+  }
+
+  @if (page(); as page) {
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="results-heading" [attr.aria-busy]="results.isLoading()">
+      <table
+        mat-table
+        [dataSource]="page.items"
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="sortBy($event)"
+      >
+        <caption class="cf-visually-hidden">
+          Cases, sorted by {{ sortLabels[sortActive()] }}, {{ sortDirection() === 'asc' ? 'ascending' : 'descending' }}
+        </caption>
+
+        <ng-container matColumnDef="caseNumber">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by case number">Case</th>
+          <td mat-cell *matCellDef="let row">
+            <a [routerLink]="['/cases', row.id]" class="case-link">{{ row.caseNumber }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="title">{{ row.title }}</div>
+            <div class="sub">{{ row.requesterName }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let row">{{ row.caseTypeName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row"><app-status-chip [status]="row.status" [resolution]="row.resolution" /></td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by priority">Priority</th>
+          <td mat-cell *matCellDef="let row"><app-priority-tag class="compact" [priority]="row.priority" /></td>
+        </ng-container>
+
+        <ng-container matColumnDef="current">
+          <th mat-header-cell *matHeaderCellDef>Current step</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.currentStep) {
+              <div>{{ row.currentStep }}</div>
+              <div class="sub">{{ row.currentAssigneeName ?? row.currentDepartmentName + ' queue' }}</div>
+            } @else {
+              <span class="sub">None</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by due date">Due</th>
+          <td mat-cell *matCellDef="let row" class="nowrap">
+            {{ row.dueDate | date: 'mediumDate' }}
+            @if (row.isOverdue) {
+              <div class="overdue-tag">Overdue</div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by date opened">Opened</th>
+          <td mat-cell *matCellDef="let row" class="nowrap">{{ row.createdAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" [class.row-overdue]="row.isOverdue"></tr>
+        <tr class="mat-mdc-row" *matNoDataRow>
+          <td class="mat-mdc-cell empty" [attr.colspan]="columns.length">No cases match. Try fewer filters.</td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="page.totalCount"
+      [pageIndex]="page.page - 1"
+      [pageSize]="page.pageSize"
+      [pageSizeOptions]="pageSizes"
+      (page)="changePage($event)"
+      aria-label="Result pages"
+    />
+  }
+</section>

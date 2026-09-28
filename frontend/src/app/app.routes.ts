@@ -20,9 +20,22 @@ export const routes: Routes = [
       { path: 'dashboard', title: 'Dashboard', loadComponent: planned, data: { milestone: 'M11' } },
       { path: 'my-work', title: 'My work', loadComponent: planned, data: { milestone: 'M10' } },
       { path: 'queue', title: 'Department queue', loadComponent: planned, data: { milestone: 'M10' } },
-      { path: 'cases', title: 'Case search', loadComponent: planned, data: { milestone: 'M9' } },
-      { path: 'cases/new', title: 'New case', loadComponent: planned, data: { milestone: 'M9' } },
-      { path: 'cases/:id', title: 'Case', loadComponent: planned, data: { milestone: 'M9' } },
+      {
+        path: 'cases',
+        title: 'Case search',
+        loadComponent: () => import('./features/cases/case-search/case-search-page').then((m) => m.CaseSearchPage),
+      },
+      {
+        path: 'cases/new',
+        title: 'New case',
+        loadComponent: () => import('./features/cases/new-case/new-case-page').then((m) => m.NewCasePage),
+      },
+      {
+        // The page retitles itself with the case number once the case loads.
+        path: 'cases/:id',
+        title: 'Case',
+        loadComponent: () => import('./features/cases/case-detail/case-detail-page').then((m) => m.CaseDetailPage),
+      },
       {
         path: 'audit',
         title: 'Audit log',

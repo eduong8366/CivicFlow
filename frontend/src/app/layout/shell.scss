@@ -20,6 +20,9 @@
 
 .header {
   display: flex;
+  // A flex item of the full-height column: without this a long page squeezes the header, and
+  // on phones its second row (search) is cut off.
+  flex-shrink: 0;
   align-items: center;
   gap: 24px;
   min-height: 64px;

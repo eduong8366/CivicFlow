@@ -1,0 +1,88 @@
+.timeline {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: none;
+  border-left: 2px solid var(--cf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 0.875rem;
+}
+
+.meta {
+  color: var(--cf-muted);
+  font-size: 0.8125rem;
+}
+
+.who {
+  color: var(--cf-ink);
+  font-weight: 700;
+}
+
+.lines {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+q {
+  display: block;
+  margin: 2px 0 4px;
+  padding-left: 10px;
+  border-left: 3px solid var(--cf-border);
+  color: var(--cf-muted);
+  font-style: italic;
+  quotes: none;
+  overflow-wrap: anywhere;
+}
+
+details {
+  margin-top: 2px;
+}
+
+summary {
+  cursor: pointer;
+  color: var(--cf-accent);
+  font-size: 0.8125rem;
+  width: fit-content;
+}
+
+.entry {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--cf-ground);
+  font-size: 0.8125rem;
+}
+
+.entry-head {
+  font-weight: 600;
+}
+
+dl {
+  margin: 4px 0 0;
+  display: grid;
+  gap: 2px;
+
+  div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 8px;
+  }
+}
+
+dt {
+  color: var(--cf-muted);
+}
+
+dt::after {
+  content: ':';
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  color: var(--cf-muted);
+}

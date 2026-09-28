@@ -133,4 +133,14 @@ a:hover {
     border-left-color: var(--cf-accent);
     background: var(--cf-accent-tint);
   }
+
+  &--success {
+    border-left-color: var(--cf-success);
+    background: #ecf3ec;
+  }
+
+  &--warning {
+    border-left-color: var(--cf-warning);
+    background: #faf3d1;
+  }
 }

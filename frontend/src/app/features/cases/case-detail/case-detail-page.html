@@ -1,0 +1,137 @@
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a routerLink="/cases">Case search</a> <span aria-hidden="true">›</span>
+  <span aria-current="page">{{ case()?.caseNumber ?? 'Case' }}</span>
+</nav>
+
+@if (detail.isLoading() && !case()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading case" />
+}
+
+@if (loadError(); as error) {
+  <h1>{{ error.heading }}</h1>
+  <div class="cf-alert cf-alert--error" role="alert">{{ error.message }}</div>
+  <p><a routerLink="/cases">Back to case search</a></p>
+}
+
+@if (case(); as c) {
+  @if (created()) {
+    <div class="cf-alert cf-alert--success" role="status">
+      Case {{ c.caseNumber }} was created. Its first step, {{ c.tasks[0]?.name }}, is in the
+      {{ c.tasks[0]?.departmentName }} queue.
+    </div>
+  }
+
+  <header class="case-head">
+    <div class="tags">
+      <span class="case-number">{{ c.caseNumber }}</span>
+      <app-status-chip [status]="c.status" [resolution]="c.resolution" />
+      <app-priority-tag [priority]="c.priority" />
+      <span class="type">{{ c.caseType.name }}</span>
+    </div>
+    <h1>{{ c.title }}</h1>
+    <p class="dates">
+      Opened {{ c.createdAt | date: 'mediumDate' }} by {{ c.createdBy.fullName }}
+      @if (c.closedAt) {
+        · {{ c.status === 'Cancelled' ? 'Cancelled' : 'Closed' }} {{ c.closedAt | date: 'mediumDate' }}
+      } @else if (c.dueDate) {
+        · Case due {{ c.dueDate | date: 'mediumDate' }}
+        @if (c.isOverdue) {
+          <strong class="overdue">Overdue</strong>
+        }
+      }
+    </p>
+  </header>
+
+  <section aria-labelledby="workflow-heading">
+    <h2 id="workflow-heading" class="cf-visually-hidden">Workflow</h2>
+    <app-workflow-stepper [tasks]="c.tasks" [onHold]="c.status === 'OnHold'" />
+  </section>
+
+  <div class="columns">
+    <div class="column">
+      @if (currentTask(); as task) {
+        <section class="cf-panel current" aria-labelledby="current-heading">
+          <h2 id="current-heading">Current step: {{ task.name }}</h2>
+          <dl class="facts">
+            <div>
+              <dt>Department</dt>
+              <dd>{{ task.departmentName }}</dd>
+            </div>
+            <div>
+              <dt>Assigned to</dt>
+              <dd>{{ task.assigneeName ?? 'Nobody yet: waiting in the department queue' }}</dd>
+            </div>
+            @if (task.dueDate) {
+              <div>
+                <dt>Step due</dt>
+                <dd>
+                  {{ task.dueDate | date: 'mediumDate' }}
+                  @if (task.isOverdue) {
+                    <strong class="overdue">Overdue</strong>
+                  }
+                </dd>
+              </div>
+            }
+            @if (task.startedAt) {
+              <div>
+                <dt>Started</dt>
+                <dd>{{ task.startedAt | date: 'mediumDate' }}</dd>
+              </div>
+            }
+          </dl>
+          @if (c.status === 'OnHold') {
+            <div class="cf-alert cf-alert--warning">
+              This case is on hold, so the step is paused.
+              @if (task.notes) {
+                Information requested: “{{ task.notes }}”
+              }
+            </div>
+          }
+        </section>
+      }
+
+      <section class="cf-panel" aria-labelledby="details-heading">
+        <h2 id="details-heading">{{ c.caseType.name }} details</h2>
+        @if (c.description) {
+          <p class="description">{{ c.description }}</p>
+        }
+        @if (fields().length) {
+          <dl class="fields">
+            @for (field of fields(); track field.fieldId) {
+              <div>
+                <dt>{{ field.label }}</dt>
+                <dd [class.blank]="field.display === null">{{ field.display ?? 'Not provided' }}</dd>
+              </div>
+            }
+          </dl>
+        }
+
+        <h3>Requester</h3>
+        <address>
+          <div>{{ c.requester.name }}</div>
+          @if (c.requester.email) {
+            <div><a [href]="'mailto:' + c.requester.email">{{ c.requester.email }}</a></div>
+          }
+          @if (c.requester.phone) {
+            <div><a [href]="'tel:' + c.requester.phone">{{ c.requester.phone }}</a></div>
+          }
+          @if (c.requester.address) {
+            <div>{{ c.requester.address }}</div>
+          }
+        </address>
+      </section>
+    </div>
+
+    <div class="column">
+      <section class="cf-panel" aria-labelledby="comments-heading">
+        <app-case-comments [caseId]="c.id" (changed)="activityChanged()" />
+      </section>
+      <section class="cf-panel" aria-labelledby="attachments-heading">
+        <app-case-attachments [caseId]="c.id" (changed)="activityChanged()" />
+      </section>
+      <section class="cf-panel" aria-label="History">
+        <app-case-history [caseId]="c.id" [tasks]="c.tasks" [version]="historyVersion()" />
+      </section>
+    </div>
+  </div>
+}

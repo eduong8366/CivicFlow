@@ -1,0 +1,190 @@
+<nav class="crumbs" aria-label="Breadcrumb"><a routerLink="/cases">Case search</a> <span aria-hidden="true">›</span> New case</nav>
+<h1>New case</h1>
+
+@if (caseTypes.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading case types" />
+} @else if (caseTypes.error()) {
+  <div class="cf-alert cf-alert--error" role="alert">The case types couldn't be loaded. Reload the page to try again.</div>
+} @else {
+  @if (errors().length || failure()) {
+    <div #errorSummary class="cf-alert cf-alert--error summary" role="alert" tabindex="-1">
+      @if (failure(); as failure) {
+        <p>{{ failure }}</p>
+      } @else {
+        <h2>Check {{ errors().length === 1 ? 'this answer' : 'these ' + errors().length + ' answers' }}</h2>
+        <ul>
+          @for (error of errors(); track $index) {
+            <li>
+              @if (error.id) {
+                <a [href]="'#' + error.id" (click)="focusField($event, error.id)">{{ error.message }}</a>
+              } @else {
+                {{ error.message }}
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <section class="cf-panel" aria-labelledby="type-heading">
+      <h2 id="type-heading">Case type</h2>
+      <mat-radio-group id="case-type" formControlName="caseTypeId" aria-labelledby="type-heading" class="types">
+        @for (type of caseTypes.value(); track type.id) {
+          <div class="type" [class.selected]="form.controls.caseTypeId.value === type.id">
+            <mat-radio-button [value]="type.id" [attr.aria-describedby]="'type-' + type.id + '-description'">
+              <span class="type-name">{{ type.name }}</span>
+            </mat-radio-button>
+            <div class="type-description" [id]="'type-' + type.id + '-description'">
+              {{ type.description }}
+              <span class="type-meta">{{ type.prefix }} · {{ type.steps.length }} {{ type.steps.length === 1 ? 'step' : 'steps' }}</span>
+            </div>
+          </div>
+        } @empty {
+          <p>No case types are active. Ask an administrator to set one up.</p>
+        }
+      </mat-radio-group>
+      @if (form.controls.caseTypeId.touched && form.controls.caseTypeId.invalid) {
+        <div class="field-error">Case type is required.</div>
+      }
+
+      @if (caseType(); as type) {
+        <div class="route" aria-label="Workflow">
+          <span class="route-label">Workflow</span>
+          <ol>
+            @for (step of type.steps; track step.id) {
+              <li>
+                <strong>{{ step.name }}</strong> <span class="route-dept">{{ step.departmentName }}</span>
+              </li>
+            }
+          </ol>
+          <span class="route-note">Due in about {{ slaDays() }} days · the first step goes to the {{ type.steps[0]?.departmentName }} queue</span>
+        </div>
+      }
+    </section>
+
+    @if (caseType(); as type) {
+      <section class="cf-panel" aria-labelledby="case-heading">
+        <h2 id="case-heading">Case</h2>
+        <div class="grid">
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>Title</mat-label>
+            <input matInput id="title" formControlName="title" maxlength="200" required />
+            <mat-hint>A short summary, e.g. the address and the work</mat-hint>
+            <mat-error>{{ message(form.controls.title, 'Title') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select id="priority" formControlName="priority" required>
+              @for (priority of priorities; track priority) {
+                <mat-option [value]="priority">{{ priority }}</mat-option>
+              }
+            </mat-select>
+            <mat-error>{{ message(form.controls.priority, 'Priority') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-all">
+            <mat-label>Description</mat-label>
+            <textarea matInput id="description" formControlName="description" rows="4" maxlength="4000"></textarea>
+            <mat-error>{{ message(form.controls.description, 'Description') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+
+      @if (type.fields.length) {
+        <section class="cf-panel" aria-labelledby="fields-heading">
+          <h2 id="fields-heading">{{ type.name }} details</h2>
+          <div class="grid">
+            @for (field of type.fields; track field.id) {
+              @let control = fieldControl(field);
+              @if (control) {
+                @switch (field.dataType) {
+                  @case ('Checkbox') {
+                    <div class="checkbox span-all">
+                      <mat-checkbox
+                        [id]="fieldId(field)"
+                        [formControl]="control"
+                        [required]="field.isRequired"
+                        [aria-describedby]="control.touched && control.invalid ? fieldId(field) + '-error' : ''"
+                        >{{ field.label }}</mat-checkbox
+                      >
+                      @if (control.touched && control.invalid) {
+                        <div class="field-error" [id]="fieldId(field) + '-error'">
+                          {{ message(control, field.label, 'checkbox') }}
+                        </div>
+                      }
+                    </div>
+                  }
+                  @case ('Select') {
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ field.label }}</mat-label>
+                      <mat-select [id]="fieldId(field)" [formControl]="control" [required]="field.isRequired">
+                        @if (!field.isRequired) {
+                          <mat-option [value]="null">None</mat-option>
+                        }
+                        @for (option of field.options; track option) {
+                          <mat-option [value]="option">{{ option }}</mat-option>
+                        }
+                      </mat-select>
+                      <mat-error>{{ message(control, field.label) }}</mat-error>
+                    </mat-form-field>
+                  }
+                  @default {
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ field.label }}</mat-label>
+                      <input
+                        matInput
+                        [id]="fieldId(field)"
+                        [formControl]="control"
+                        [type]="field.dataType === 'Number' ? 'number' : field.dataType === 'Date' ? 'date' : 'text'"
+                        [required]="field.isRequired"
+                      />
+                      <mat-error>{{ message(control, field.label) }}</mat-error>
+                    </mat-form-field>
+                  }
+                }
+              }
+            }
+          </div>
+        </section>
+      }
+
+      <section class="cf-panel" aria-labelledby="requester-heading">
+        <h2 id="requester-heading">Requester</h2>
+        <p class="lede">The person or business who asked for this.</p>
+        <div class="grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput id="requester-name" formControlName="requesterName" autocomplete="off" maxlength="150" required />
+            <mat-error>{{ message(form.controls.requesterName, 'Requester name') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput id="requester-email" formControlName="requesterEmail" type="email" autocomplete="off" />
+            <mat-error>{{ message(form.controls.requesterEmail, 'Email') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone</mat-label>
+            <input matInput id="requester-phone" formControlName="requesterPhone" type="tel" autocomplete="off" maxlength="30" />
+            <mat-error>{{ message(form.controls.requesterPhone, 'Phone') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-all">
+            <mat-label>Address</mat-label>
+            <input matInput id="requester-address" formControlName="requesterAddress" autocomplete="off" maxlength="300" />
+            <mat-error>{{ message(form.controls.requesterAddress, 'Address') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+    }
+
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="busy()">{{ busy() ? 'Creating…' : 'Create case' }}</button>
+      <a mat-stroked-button routerLink="/cases">Cancel</a>
+    </div>
+  </form>
+}

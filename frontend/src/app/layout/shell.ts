@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter, map, skip } from 'rxjs';
+import { filter, map, pairwise } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { AgencyBanner } from './agency-banner';
 import { navigationFor } from './navigation';
@@ -41,11 +41,15 @@ export class Shell {
 
   constructor() {
     // A route change in a single-page app doesn't move focus; move it to the new page so
-    // keyboard and screen reader users start at its content (the title is announced too).
+    // keyboard and screen reader users start at its content (the title is announced too). A
+    // change of query only (sorting, paging, filtering a list) stays on the same page, so focus
+    // stays on the control that made it.
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),
-        skip(1),
+        map((event) => event.urlAfterRedirects.split(/[?#]/)[0]),
+        pairwise(),
+        filter(([previous, current]) => previous !== current),
         takeUntilDestroyed(inject(DestroyRef)),
       )
       .subscribe(() => this.main().nativeElement.focus({ preventScroll: false }));

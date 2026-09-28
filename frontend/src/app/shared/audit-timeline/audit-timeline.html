@@ -1,0 +1,45 @@
+<ol class="timeline">
+  @for (event of events(); track event.key) {
+    <li class="event">
+      <div class="meta">
+        <time [attr.datetime]="event.timestamp">{{ event.timestamp | date: 'MMM d, y, h:mm a' }}</time>
+        · <span class="who">{{ event.userName ?? 'System' }}</span>
+      </div>
+      <ul class="lines">
+        @for (line of event.lines; track $index) {
+          <li>
+            {{ line.text }}
+            @if (line.quote) {
+              <q>{{ line.quote }}</q>
+            }
+          </li>
+        }
+      </ul>
+      <details>
+        <summary>Changes<span class="cf-visually-hidden"> recorded {{ event.timestamp | date: 'MMM d, h:mm a' }}</span></summary>
+        @for (entry of event.entries; track entry.id) {
+          <div class="entry">
+            <div class="entry-head">{{ entry.entityType }} {{ entry.entityId }} · {{ entry.action }}</div>
+            @if ((entry.changes | keyvalue: keepOrder).length) {
+              <dl>
+                @for (change of entry.changes | keyvalue: keepOrder; track change.key) {
+                  <div>
+                    <dt>{{ humanize(change.key) }}</dt>
+                    <dd>
+                      @if (change.value.old !== null) {
+                        <del>{{ change.value.old }}</del> →
+                      }
+                      {{ change.value.new ?? '(none)' }}
+                    </dd>
+                  </div>
+                }
+              </dl>
+            }
+          </div>
+        }
+      </details>
+    </li>
+  } @empty {
+    <li class="empty">No history recorded yet.</li>
+  }
+</ol>

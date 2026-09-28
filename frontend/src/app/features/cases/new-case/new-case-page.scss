@@ -1,0 +1,157 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 960px;
+}
+
+.crumbs {
+  font-size: 0.875rem;
+  color: var(--cf-muted);
+
+  [aria-hidden='true'] {
+    margin: 0 6px;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 14px;
+}
+
+.lede {
+  margin: -8px 0 14px;
+  color: var(--cf-muted);
+  font-size: 0.875rem;
+}
+
+.summary {
+  outline-offset: 2px;
+
+  h2 {
+    font-size: 1.125rem;
+    margin-bottom: 6px;
+  }
+
+  p,
+  ul {
+    margin: 0;
+  }
+
+  ul {
+    padding-left: 20px;
+  }
+}
+
+.types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.type {
+  border: 1px solid var(--cf-muted);
+  padding: 8px 14px 12px 4px;
+
+  &.selected {
+    border: 2px solid var(--cf-accent);
+    background: var(--cf-accent-tint);
+    padding: 7px 13px 11px 3px;
+  }
+}
+
+.type-name {
+  font-weight: 700;
+}
+
+.type-description {
+  padding-left: 40px;
+  font-size: 0.875rem;
+}
+
+.type-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--cf-muted);
+}
+
+.route {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cf-border);
+  font-size: 0.875rem;
+
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding: 4px 10px;
+    border-top: 4px solid var(--cf-border);
+    background: var(--cf-ground);
+  }
+}
+
+.route-label {
+  font-weight: 700;
+}
+
+.route-dept,
+.route-note {
+  color: var(--cf-muted);
+}
+
+.route-dept {
+  margin-left: 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 16px;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.checkbox {
+  margin-bottom: 12px;
+}
+
+.field-error {
+  margin-top: 4px;
+  color: var(--cf-danger);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 719.98px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .span-2 {
+    grid-column: auto;
+  }
+}

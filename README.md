@@ -56,6 +56,14 @@ dotnet ef database update -p src/CivicFlow.Infrastructure -s src/CivicFlow.Api
 
 In Development, `dotnet run --project src/CivicFlow.Api` also applies any pending migrations on startup. The demo data is only seeded into an empty database. To start over, run `dotnet ef database drop -p src/CivicFlow.Infrastructure -s src/CivicFlow.Api` and then update again.
 
+The integration tests run the API in memory against a separate LocalDB database, `CivicFlow_Tests`, which they drop and reseed on every run. They never touch `CivicFlow`.
+
+### Trying the API
+
+With the API running, Swagger UI is at http://localhost:5109/swagger (Development only). Call `POST /api/auth/login` with one of the [demo accounts](#demo-accounts), copy the `accessToken` from the response, and paste it into **Authorize**. Every endpoint except login and `/api/health` requires a token. Errors come back as [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) JSON.
+
+Only `appsettings.Development.json` contains a JWT signing key. In any other environment, set `Jwt__SigningKey` (at least 32 bytes) through user secrets or an environment variable, or the API refuses to start.
+
 ### Frontend
 
 _Coming soon._

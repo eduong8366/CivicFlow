@@ -1,9 +1,10 @@
+using CivicFlow.Application.Abstractions;
 using CivicFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CivicFlow.Infrastructure.Persistence;
 
-public class CivicFlowDbContext(DbContextOptions<CivicFlowDbContext> options) : DbContext(options)
+public class CivicFlowDbContext(DbContextOptions<CivicFlowDbContext> options) : DbContext(options), ICivicFlowDbContext
 {
     public const string CaseNumberSequence = "CaseNumberSequence";
 

@@ -27,4 +27,19 @@ public class ArchitectureTests
 
         Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void Application_uses_EF_Core_but_no_database_provider_or_web_framework()
+    {
+        // Application queries through ICivicFlowDbContext (EF Core's DbSet/LINQ); the SQL Server
+        // provider, Identity and ASP.NET Core stay in the outer layers.
+        var referenced = Assembly.Load("CivicFlow.Application")
+            .GetReferencedAssemblies()
+            .Select(a => a.Name!)
+            .ToList();
+
+        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.EntityFrameworkCore.SqlServer", StringComparison.Ordinal));
+        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
+        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.Extensions.Identity", StringComparison.Ordinal));
+    }
 }

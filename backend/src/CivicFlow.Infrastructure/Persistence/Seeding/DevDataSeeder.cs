@@ -2,7 +2,7 @@ using System.Globalization;
 using CivicFlow.Application.Abstractions;
 using CivicFlow.Domain.Entities;
 using CivicFlow.Domain.Enums;
-using Microsoft.AspNetCore.Identity;
+using CivicFlow.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CivicFlow.Infrastructure.Persistence.Seeding;
@@ -77,10 +77,10 @@ internal static class DevDataSeeder
             users.Add(new() { Email = $"{login}.staff2@{EmailDomain}", FullName = staff2, Role = UserRole.Staff, Department = department });
         }
 
-        var hasher = new PasswordHasher<User>();
+        var hasher = new IdentityPasswordHasher();
         foreach (var user in users)
         {
-            user.PasswordHash = hasher.HashPassword(user, DemoPassword);
+            user.PasswordHash = hasher.Hash(user, DemoPassword);
         }
 
         return users;

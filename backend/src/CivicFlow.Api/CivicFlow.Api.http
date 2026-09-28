@@ -1,0 +1,5 @@
+@CivicFlow.Api_HostAddress = http://localhost:5109
+
+GET {{CivicFlow.Api_HostAddress}}/api/health
+
+###

@@ -17,4 +17,14 @@ public class ArchitectureTests
 
         Assert.All(referenced, name => Assert.Contains(name, allowed));
     }
+
+    [Fact]
+    public void Domain_does_not_depend_on_EF_Core()
+    {
+        var referenced = Assembly.Load("CivicFlow.Domain")
+            .GetReferencedAssemblies()
+            .Select(a => a.Name!);
+
+        Assert.DoesNotContain(referenced, n => n.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal));
+    }
 }

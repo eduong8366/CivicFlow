@@ -60,10 +60,10 @@ public sealed class CivicFlowApiFactory : WebApplicationFactory<Program>, IAsync
     public CivicFlowDbContext CreateDbContext() =>
         new(new DbContextOptionsBuilder<CivicFlowDbContext>().UseSqlServer(ConnectionString).Options);
 
-    public async Task<HttpClient> CreateClientAsAsync(string email)
+    public async Task<HttpClient> CreateClientAsAsync(string email, string password = DemoPassword)
     {
         var client = CreateClient();
-        var response = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, DemoPassword));
+        var response = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, password));
         response.EnsureSuccessStatusCode();
         var login = await response.Content.ReadFromJsonAsync<LoginResponse>(TestJson.Options);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login!.AccessToken);

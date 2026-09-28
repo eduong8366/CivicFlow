@@ -1,0 +1,53 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lede {
+  margin: 6px 0 0;
+  color: var(--cf-muted);
+}
+
+.results {
+  padding: 0;
+
+  > .cf-alert {
+    margin: 0 24px 16px;
+  }
+}
+
+.results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 16px 24px 12px;
+
+  h2 {
+    font-size: 1.125rem;
+  }
+}
+
+.count {
+  margin: 0;
+  color: var(--cf-muted);
+}
+
+.hint {
+  margin: 0;
+  padding: 0 24px 20px;
+}
+
+.department {
+  width: 280px;
+  max-width: 100%;
+}

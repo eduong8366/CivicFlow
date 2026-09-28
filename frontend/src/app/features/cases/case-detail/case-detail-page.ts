@@ -1,18 +1,36 @@
 import { DatePipe, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, input, numberAttribute, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  linkedSignal,
+  numberAttribute,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { tap } from 'rxjs';
-import { CasesApi } from '../../../core/api/cases.api';
+import { CasesApi, CaseStatusChange } from '../../../core/api/cases.api';
+import { CaseDetail } from '../../../core/api/cases.models';
 import { problemMessage } from '../../../core/api/problem-details';
 import { formatFieldValue } from '../../../shared/labels';
 import { PriorityTag, StatusChip } from '../../../shared/status-chip';
+import { statusChangeMessage } from './case-actions';
 import { CaseAttachments } from './case-attachments';
 import { CaseComments } from './case-comments';
 import { CaseHistory } from './case-history';
+import { CaseStatusDialog, CaseStatusDialogData } from './case-status-dialog';
+import { ActionFailure, CaseUpdate, TaskActions } from './task-actions';
 import { WorkflowStepper } from './workflow-stepper';
 
 /**
@@ -26,10 +44,12 @@ import { WorkflowStepper } from './workflow-stepper';
     CaseComments,
     CaseHistory,
     DatePipe,
+    MatButtonModule,
     MatProgressBarModule,
     PriorityTag,
     RouterLink,
     StatusChip,
+    TaskActions,
     WorkflowStepper,
   ],
   templateUrl: './case-detail-page.html',
@@ -38,6 +58,8 @@ import { WorkflowStepper } from './workflow-stepper';
 export class CaseDetailPage {
   private readonly casesApi = inject(CasesApi);
   private readonly title = inject(Title);
+  private readonly dialog = inject(MatDialog);
+  private readonly injector = inject(Injector);
 
   /** The `:id` route parameter (component input binding). */
   readonly id = input.required({ transform: numberAttribute });
@@ -79,8 +101,63 @@ export class CaseDetailPage {
 
   /** Bumped when a comment or file is added, so the history shows it. */
   protected readonly historyVersion = signal(0);
+  /** Bumped after a hold, cancel or reopen, whose reason is kept as a comment. */
+  protected readonly commentsVersion = signal(0);
+
+  /** What the last action did, or why it failed. */
+  protected readonly notice = linkedSignal<number, { kind: 'success' | 'error'; message: string } | null>({
+    source: this.id,
+    computation: () => null,
+  });
+  private readonly noticeElement = viewChild<ElementRef<HTMLElement>>('noticeBox');
+
+  protected readonly showTaskActions = computed(() => {
+    const actions = this.currentTask()?.actions;
+    return !!actions && (actions.canClaim || actions.canAssign || actions.canComplete);
+  });
 
   protected activityChanged(): void {
     this.historyVersion.update((version) => version + 1);
+  }
+
+  /** An action succeeded: show the case as the API returned it, and say what happened. */
+  protected applyUpdate(update: CaseUpdate): void {
+    this.detail.set(update.detail);
+    this.activityChanged();
+    this.showNotice('success', update.message);
+  }
+
+  protected actionFailed(failure: ActionFailure): void {
+    if (failure.stale) {
+      this.detail.reload();
+      this.activityChanged();
+    }
+
+    this.showNotice('error', failure.message);
+  }
+
+  protected changeStatus(change: CaseStatusChange): void {
+    const c = this.case();
+    if (!c) {
+      return;
+    }
+
+    const wasOnHold = c.status === 'OnHold';
+    const data: CaseStatusDialogData = { caseId: c.id, caseNumber: c.caseNumber, change, resume: change === 'reopen' && wasOnHold };
+    this.dialog
+      .open<CaseStatusDialog, CaseStatusDialogData, CaseDetail>(CaseStatusDialog, { data, width: '520px', maxWidth: 'calc(100vw - 32px)' })
+      .afterClosed()
+      .subscribe((updated) => {
+        if (updated) {
+          this.commentsVersion.update((version) => version + 1);
+          this.applyUpdate({ detail: updated, message: statusChangeMessage(change, wasOnHold, updated) });
+        }
+      });
+  }
+
+  private showNotice(kind: 'success' | 'error', message: string): void {
+    this.notice.set({ kind, message });
+    // The control that was used may be gone (a completed step's form), so focus lands on the result.
+    afterNextRender(() => this.noticeElement()?.nativeElement.focus(), { injector: this.injector });
   }
 }

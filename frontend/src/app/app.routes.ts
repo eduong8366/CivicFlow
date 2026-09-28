@@ -18,8 +18,16 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: 'Dashboard', loadComponent: planned, data: { milestone: 'M11' } },
-      { path: 'my-work', title: 'My work', loadComponent: planned, data: { milestone: 'M10' } },
-      { path: 'queue', title: 'Department queue', loadComponent: planned, data: { milestone: 'M10' } },
+      {
+        path: 'my-work',
+        title: 'My work',
+        loadComponent: () => import('./features/tasks/my-work-page').then((m) => m.MyWorkPage),
+      },
+      {
+        path: 'queue',
+        title: 'Department queue',
+        loadComponent: () => import('./features/tasks/queue-page').then((m) => m.QueuePage),
+      },
       {
         path: 'cases',
         title: 'Case search',

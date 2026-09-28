@@ -13,6 +13,32 @@
   }
 }
 
+// The case actions sit at the right of the header, beside the title.
+.case-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+
+  > :not(.case-actions) {
+    grid-column: 1;
+  }
+}
+
+.case-actions {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.danger {
+  --mat-button-outlined-label-text-color: var(--cf-danger);
+  --mat-button-outlined-outline-color: var(--cf-danger);
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -119,6 +145,19 @@ address {
 @media (max-width: 1099.98px) {
   .columns {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 799.98px) {
+  .case-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .case-actions {
+    grid-column: 1;
+    grid-row: 4;
+    justify-content: flex-start;
+    margin-top: 12px;
   }
 }
 

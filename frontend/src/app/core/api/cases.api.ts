@@ -21,4 +21,14 @@ export class CasesApi {
   create(request: CreateCaseRequest): Observable<CaseDetail> {
     return this.http.post<CaseDetail>('/api/cases', request);
   }
+
+  /**
+   * Puts the case on hold, cancels it, or reopens it (resuming an on-hold case). A reason is kept
+   * on the case as an internal comment.
+   */
+  changeStatus(id: number, change: CaseStatusChange, reason: string | null = null): Observable<CaseDetail> {
+    return this.http.post<CaseDetail>(`/api/cases/${id}/${change}`, { reason });
+  }
 }
+
+export type CaseStatusChange = 'hold' | 'cancel' | 'reopen';

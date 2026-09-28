@@ -13,6 +13,11 @@ import { problemMessage } from '../../../core/api/problem-details';
 
 const maxBodyLength = 4000;
 
+interface Loaded<T> {
+  caseId: number;
+  value: T | null;
+}
+
 /** A case's comments, oldest first, and a form to add one. Comments are internal unless unticked. */
 @Component({
   selector: 'app-case-comments',
@@ -136,19 +141,36 @@ export class CaseComments {
   private readonly formDirective = viewChild.required(FormGroupDirective);
 
   readonly caseId = input.required<number>();
+  /**
+   * Bumped when an action elsewhere on the page may have added a comment (a hold, cancel or
+   * reopen reason is kept as one), to fetch them again.
+   */
+  readonly version = input(0);
   /** A comment was added, so the case history has a new entry. */
   readonly changed = output<void>();
 
   protected readonly maxBodyLength = maxBodyLength;
   protected readonly comments = rxResource({
-    params: () => this.caseId(),
-    stream: ({ params }) => this.api.list(params, { pageSize: maxPageSize }),
+    params: () => ({ caseId: this.caseId(), version: this.version() }),
+    stream: ({ params }) => this.api.list(params.caseId, { pageSize: maxPageSize }),
   });
 
-  /** The loaded comments, plus later pages and new comments as they're added. */
-  protected readonly items = linkedSignal<Comment[]>(() => (this.comments.hasValue() ? this.comments.value().items : []));
-  private readonly total = linkedSignal(() => (this.comments.hasValue() ? this.comments.value().totalCount : 0));
-  private readonly pagesLoaded = linkedSignal({ source: this.caseId, computation: () => 1 });
+  /**
+   * The loaded comments, plus later pages and new comments as they're added. On a refresh the old
+   * ones stay until the new ones arrive.
+   */
+  protected readonly items = linkedSignal<Loaded<Comment[]>, Comment[]>({
+    source: () => ({ caseId: this.caseId(), value: this.comments.hasValue() ? this.comments.value().items : null }),
+    computation: (next, previous) => next.value ?? (previous?.source.caseId === next.caseId ? previous.value : []),
+  });
+  private readonly total = linkedSignal<Loaded<number>, number>({
+    source: () => ({ caseId: this.caseId(), value: this.comments.hasValue() ? this.comments.value().totalCount : null }),
+    computation: (next, previous) => next.value ?? (previous?.source.caseId === next.caseId ? previous.value : 0),
+  });
+  private readonly pagesLoaded = linkedSignal({
+    source: () => ({ caseId: this.caseId(), version: this.version() }),
+    computation: () => 1,
+  });
   protected readonly hasMore = computed(() => this.items().length < this.total());
   protected readonly loadingMore = signal(false);
 

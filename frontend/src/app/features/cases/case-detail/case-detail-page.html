@@ -14,14 +14,42 @@
 }
 
 @if (case(); as c) {
-  @if (created()) {
+  @if (created() && !notice()) {
     <div class="cf-alert cf-alert--success" role="status">
       Case {{ c.caseNumber }} was created. Its first step, {{ c.tasks[0]?.name }}, is in the
       {{ c.tasks[0]?.departmentName }} queue.
     </div>
   }
 
+  @if (notice(); as n) {
+    <div
+      #noticeBox
+      class="cf-alert"
+      [class.cf-alert--success]="n.kind === 'success'"
+      [class.cf-alert--error]="n.kind === 'error'"
+      [attr.role]="n.kind === 'error' ? 'alert' : 'status'"
+      tabindex="-1"
+    >
+      {{ n.message }}
+    </div>
+  }
+
   <header class="case-head">
+    @if (c.actions.canHold || c.actions.canCancel || c.actions.canReopen) {
+      <div class="case-actions" role="group" aria-label="Case actions">
+        @if (c.actions.canReopen) {
+          <button mat-flat-button type="button" (click)="changeStatus('reopen')">
+            {{ c.status === 'OnHold' ? 'Resume case' : 'Reopen case' }}
+          </button>
+        }
+        @if (c.actions.canHold) {
+          <button mat-stroked-button type="button" (click)="changeStatus('hold')">Put on hold</button>
+        }
+        @if (c.actions.canCancel) {
+          <button mat-stroked-button type="button" class="danger" (click)="changeStatus('cancel')">Cancel case</button>
+        }
+      </div>
+    }
     <div class="tags">
       <span class="case-number">{{ c.caseNumber }}</span>
       <app-status-chip [status]="c.status" [resolution]="c.resolution" />
@@ -85,7 +113,13 @@
               @if (task.notes) {
                 Information requested: “{{ task.notes }}”
               }
+              @if (c.actions.canReopen) {
+                Resume the case when it can go ahead.
+              }
             </div>
+          }
+          @if (showTaskActions()) {
+            <app-task-actions [caseDetail]="c" [task]="task" (updated)="applyUpdate($event)" (failed)="actionFailed($event)" />
           }
         </section>
       }
@@ -124,7 +158,7 @@
 
     <div class="column">
       <section class="cf-panel" aria-labelledby="comments-heading">
-        <app-case-comments [caseId]="c.id" (changed)="activityChanged()" />
+        <app-case-comments [caseId]="c.id" [version]="commentsVersion()" (changed)="activityChanged()" />
       </section>
       <section class="cf-panel" aria-labelledby="attachments-heading">
         <app-case-attachments [caseId]="c.id" (changed)="activityChanged()" />

@@ -1,0 +1,58 @@
+# Planning notes (not part of the shipped project)
+plan.md
+
+# ---------- .NET ----------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+.vs/
+TestResults/
+*.trx
+coverage*.json
+coverage*.xml
+*.coverage
+appsettings.*.local.json
+**/Properties/launchSettings.local.json
+
+# Local file-attachment storage (runtime data, never committed)
+backend/**/App_Data/
+backend/**/uploads/
+storage/
+
+# ---------- Node / Angular ----------
+node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/out-tsc/
+frontend/coverage/
+npm-debug.log*
+yarn-error.log*
+.npm/
+
+# ---------- Databases ----------
+*.mdf
+*.ldf
+*.ndf
+
+# ---------- Secrets / env ----------
+.env
+.env.*
+!.env.example
+*.pfx
+secrets.json
+
+# ---------- Editors / OS ----------
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

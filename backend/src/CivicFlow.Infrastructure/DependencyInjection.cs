@@ -22,7 +22,9 @@ public static class DependencyInjection
         {
             var connectionString = serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString("CivicFlow")
                 ?? throw new InvalidOperationException("Connection string 'CivicFlow' is not configured.");
-            options.UseSqlServer(connectionString);
+            // Split queries by default: loading a case with its tasks, fields and values in one JOIN
+            // would multiply the rows. Application code stays provider-neutral, so it's set here.
+            options.UseSqlServer(connectionString, sql => sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
 
             // Demo data only ever goes into development databases. EF runs these hooks after
             // Migrate()/MigrateAsync() and after `dotnet ef database update`.

@@ -22,12 +22,16 @@ public sealed class CivicFlowApiFactory : WebApplicationFactory<Program>, IAsync
     /// <summary>Every seeded account has this password.</summary>
     public const string DemoPassword = "CivicFlow!2026";
 
+    /// <summary>Uploaded attachments go to a temporary directory, removed when the run ends.</summary>
+    public string FileStorageRoot { get; } = Path.Combine(Path.GetTempPath(), $"civicflow-tests-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:CivicFlow"] = ConnectionString,
+            ["FileStorage:RootPath"] = FileStorageRoot,
         }));
     }
 
@@ -42,7 +46,15 @@ public sealed class CivicFlowApiFactory : WebApplicationFactory<Program>, IAsync
         _ = Server;
     }
 
-    Task IAsyncLifetime.DisposeAsync() => Task.CompletedTask;
+    Task IAsyncLifetime.DisposeAsync()
+    {
+        if (Directory.Exists(FileStorageRoot))
+        {
+            Directory.Delete(FileStorageRoot, recursive: true);
+        }
+
+        return Task.CompletedTask;
+    }
 
     /// <summary>A context on the test database, for arranging and checking data directly.</summary>
     public CivicFlowDbContext CreateDbContext() =>

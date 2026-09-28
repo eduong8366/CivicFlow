@@ -35,6 +35,17 @@ public sealed class CreateCaseRequestValidator : AbstractValidator<CreateCaseReq
     }
 }
 
+/// <summary>An optional reason for putting a case on hold, cancelling or reopening it, kept as an internal comment.</summary>
+public sealed record ChangeCaseStatusRequest(string? Reason);
+
+public sealed class ChangeCaseStatusRequestValidator : AbstractValidator<ChangeCaseStatusRequest>
+{
+    public ChangeCaseStatusRequestValidator()
+    {
+        RuleFor(r => r.Reason).MaximumLength(2000);
+    }
+}
+
 public enum CaseSortField
 {
     CreatedAt,

@@ -2,7 +2,9 @@ using System.Text;
 using CivicFlow.Application.Abstractions;
 using CivicFlow.Infrastructure.Identity;
 using CivicFlow.Infrastructure.Persistence;
+using CivicFlow.Infrastructure.Persistence.Auditing;
 using CivicFlow.Infrastructure.Persistence.Seeding;
+using CivicFlow.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +28,11 @@ public static class DependencyInjection
             // would multiply the rows. Application code stays provider-neutral, so it's set here.
             options.UseSqlServer(connectionString, sql => sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
 
+            // One interceptor per context: it keeps state between a save and its audit rows. The
+            // current user is absent outside a request (startup migration, `dotnet ef`).
+            options.AddInterceptors(new AuditSaveChangesInterceptor(
+                serviceProvider.GetService<ICurrentUser>(), serviceProvider.GetRequiredService<TimeProvider>()));
+
             // Demo data only ever goes into development databases. EF runs these hooks after
             // Migrate()/MigrateAsync() and after `dotnet ef database update`.
             if (environment.IsDevelopment())
@@ -38,6 +45,12 @@ public static class DependencyInjection
 
         services.AddScoped<ICivicFlowDbContext>(sp => sp.GetRequiredService<CivicFlowDbContext>());
         services.AddScoped<ICaseNumberGenerator, SqlCaseNumberGenerator>();
+
+        services.AddOptions<FileStorageOptions>()
+            .BindConfiguration(FileStorageOptions.SectionName)
+            .Validate(o => !string.IsNullOrWhiteSpace(o.RootPath), "FileStorage:RootPath must be configured.")
+            .ValidateOnStart();
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         services.AddOptions<JwtOptions>()
             .BindConfiguration(JwtOptions.SectionName)

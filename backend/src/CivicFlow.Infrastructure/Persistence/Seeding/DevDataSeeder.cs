@@ -38,8 +38,26 @@ internal static class DevDataSeeder
         db.CaseTypes.AddRange(caseTypes);
         db.Cases.AddRange(cases);
 
-        // A single save, so the seed is all-or-nothing.
-        await db.SaveChangesAsync(cancellationToken);
+        // The audit history needs the saved ids, so it's a second save; one transaction keeps the
+        // seed all-or-nothing. The history is backdated, so the automatic trail is off meanwhile.
+        db.AuditingSuppressed = true;
+        try
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+
+            var now = DateTimeOffset.UtcNow;
+            db.AuditLogs.AddRange(cases
+                .SelectMany(c => DevAuditHistory.For(c, users, now))
+                .OrderBy(a => a.Timestamp));
+            await db.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        finally
+        {
+            db.AuditingSuppressed = false;
+        }
     }
 
     private static Dictionary<string, Department> CreateDepartments() => new Department[]

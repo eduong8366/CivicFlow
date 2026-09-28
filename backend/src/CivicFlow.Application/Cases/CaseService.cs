@@ -15,7 +15,8 @@ public sealed class CaseService(
     ICaseNumberGenerator caseNumbers,
     TimeProvider timeProvider,
     IValidator<CreateCaseRequest> createValidator,
-    IValidator<CaseSearchQuery> searchValidator)
+    IValidator<CaseSearchQuery> searchValidator,
+    IValidator<ChangeCaseStatusRequest> statusChangeValidator)
 {
     public async Task<PagedResult<CaseListItemDto>> SearchAsync(CaseSearchQuery query, CancellationToken cancellationToken = default)
     {
@@ -118,7 +119,7 @@ public sealed class CaseService(
     public async Task<CaseDetailDto> GetAsync(int id, CancellationToken cancellationToken = default)
     {
         var actor = currentUser.RequireActor();
-        await EnsureCanViewAsync(id, actor, cancellationToken);
+        await db.EnsureCanViewCaseAsync(id, actor, cancellationToken);
 
         var @case = await db.Cases
             .AsNoTracking()
@@ -168,18 +169,26 @@ public sealed class CaseService(
         return await GetAsync(@case.Id, cancellationToken);
     }
 
-    public Task<CaseDetailDto> HoldAsync(int id, CancellationToken cancellationToken = default) =>
-        ManageAsync(id, WorkflowPermissions.CanManage, engine.Hold, cancellationToken);
+    public Task<CaseDetailDto> HoldAsync(int id, ChangeCaseStatusRequest? request = null, CancellationToken cancellationToken = default) =>
+        ManageAsync(id, request, "Put on hold", WorkflowPermissions.CanManage, engine.Hold, cancellationToken);
 
-    public Task<CaseDetailDto> CancelAsync(int id, CancellationToken cancellationToken = default) =>
-        ManageAsync(id, WorkflowPermissions.CanManage, engine.Cancel, cancellationToken);
+    public Task<CaseDetailDto> CancelAsync(int id, ChangeCaseStatusRequest? request = null, CancellationToken cancellationToken = default) =>
+        ManageAsync(id, request, "Cancelled", WorkflowPermissions.CanManage, engine.Cancel, cancellationToken);
 
-    public Task<CaseDetailDto> ReopenAsync(int id, CancellationToken cancellationToken = default) =>
-        ManageAsync(id, WorkflowPermissions.CanReopen, engine.Reopen, cancellationToken);
+    public Task<CaseDetailDto> ReopenAsync(int id, ChangeCaseStatusRequest? request = null, CancellationToken cancellationToken = default) =>
+        ManageAsync(id, request, "Reopened", WorkflowPermissions.CanReopen, engine.Reopen, cancellationToken);
 
+    /// <summary>Applies a status change. A reason, if given, is saved with it as an internal comment.</summary>
     private async Task<CaseDetailDto> ManageAsync(
-        int id, Func<Actor, Case, bool> isAllowed, Action<Case> transition, CancellationToken cancellationToken)
+        int id,
+        ChangeCaseStatusRequest? request,
+        string reasonLabel,
+        Func<Actor, Case, bool> isAllowed,
+        Action<Case> transition,
+        CancellationToken cancellationToken)
     {
+        request ??= new ChangeCaseStatusRequest(null);
+        await statusChangeValidator.ValidateAndThrowAsync(request, cancellationToken);
         var actor = currentUser.RequireActor();
         var @case = await db.LoadCaseForWorkflowAsync(id, cancellationToken);
         if (!isAllowed(actor, @case))
@@ -188,22 +197,21 @@ public sealed class CaseService(
         }
 
         transition(@case);
+        if (Validation.Clean(request.Reason) is { } reason)
+        {
+            db.Comments.Add(new Comment
+            {
+                CaseId = id,
+                AuthorId = actor.UserId,
+                Body = $"{reasonLabel}: {reason}",
+                IsInternal = true,
+                CreatedAt = timeProvider.GetUtcNow(),
+            });
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return await GetAsync(id, cancellationToken);
-    }
-
-    /// <summary>404 if the case doesn't exist, 403 if it exists but the caller may not see it.</summary>
-    private async Task EnsureCanViewAsync(int id, Actor actor, CancellationToken cancellationToken)
-    {
-        if (await db.Cases.Where(c => c.Id == id).Where(WorkflowPermissions.CanView(actor)).AnyAsync(cancellationToken))
-        {
-            return;
-        }
-
-        throw await db.Cases.AnyAsync(c => c.Id == id, cancellationToken)
-            ? new ForbiddenException("You don't have access to this case.")
-            : new NotFoundException("Case", id);
     }
 
     private static IQueryable<Case> Sort(IQueryable<Case> cases, CaseSortField sort, bool descending)

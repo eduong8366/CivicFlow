@@ -1,6 +1,9 @@
+using CivicFlow.Application.Attachments;
+using CivicFlow.Application.Audit;
 using CivicFlow.Application.Auth;
 using CivicFlow.Application.Cases;
 using CivicFlow.Application.CaseTypes;
+using CivicFlow.Application.Comments;
 using CivicFlow.Application.Tasks;
 using CivicFlow.Application.Workflow;
 using FluentValidation;
@@ -18,9 +21,12 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<WorkflowEngine>();
 
+        services.AddScoped<AttachmentService>();
+        services.AddScoped<AuditService>();
         services.AddScoped<AuthService>();
         services.AddScoped<CaseService>();
         services.AddScoped<CaseTypeService>();
+        services.AddScoped<CommentService>();
         services.AddScoped<TaskService>();
 
         return services;

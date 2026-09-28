@@ -20,6 +20,12 @@ public class CivicFlowDbContext(DbContextOptions<CivicFlowDbContext> options) : 
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    /// <summary>
+    /// Turns off the automatic audit trail, for the demo seed, which writes a backdated history of its
+    /// own. Everything else is audited.
+    /// </summary>
+    internal bool AuditingSuppressed { get; set; }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // Enums are stored by name so the tables stay readable in SQL and in reports.

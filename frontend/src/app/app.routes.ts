@@ -17,7 +17,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', title: 'Dashboard', loadComponent: planned, data: { milestone: 'M11' } },
+      {
+        path: 'dashboard',
+        title: 'Dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
+      },
       {
         path: 'my-work',
         title: 'My work',

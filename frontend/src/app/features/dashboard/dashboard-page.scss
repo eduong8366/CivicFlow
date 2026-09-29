@@ -1,0 +1,144 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.as-of {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  color: var(--cf-muted);
+}
+
+.lede {
+  margin: 6px 0 0;
+  color: var(--cf-muted);
+}
+
+.department {
+  width: 280px;
+  max-width: 100%;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: opacity 150ms;
+
+  // Another department is loading: keep this one on screen, dimmed, rather than flashing empty.
+  &.stale {
+    opacity: 0.6;
+  }
+}
+
+// KPI tiles with a coloured top border, as in the design.
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 20px 16px;
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-top: 4px solid var(--tone);
+
+  &--accent {
+    --tone: var(--cf-accent);
+  }
+  &--danger {
+    --tone: var(--cf-danger);
+  }
+  &--warning {
+    --tone: var(--cf-warning);
+  }
+  &--success {
+    --tone: var(--cf-success);
+  }
+  &--muted {
+    --tone: var(--cf-muted);
+  }
+}
+
+.kpi-label {
+  font-size: 0.875rem;
+  color: var(--cf-muted);
+}
+
+.kpi-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+// Red only when something is actually overdue.
+.kpi--danger:not(.kpi--none) .kpi-value {
+  color: var(--cf-danger);
+}
+
+.kpi-link {
+  font-size: 0.875rem;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1099.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The numbers behind each chart (projected into the panel's "Show the numbers").
+.numbers {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 8px 12px 8px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--cf-border);
+  }
+
+  thead th {
+    border-bottom: 2px solid var(--cf-ink);
+  }
+
+  tbody th {
+    font-weight: 400;
+  }
+
+  .num {
+    text-align: right;
+    padding-right: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .role {
+    color: var(--cf-muted);
+  }
+
+  .overdue {
+    color: var(--cf-danger);
+    font-weight: 700;
+  }
+}

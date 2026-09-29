@@ -1,0 +1,178 @@
+<div class="page-head">
+  <div>
+    @if (summary(); as s) {
+      <p class="as-of">As of {{ s.asOf | date: 'EEEE, MMMM d, y' }} (UTC)</p>
+    }
+    <h1>{{ heading() }}</h1>
+    @if (lede()) {
+      <p class="lede">{{ lede() }}</p>
+    }
+  </div>
+  @if (isAdmin()) {
+    <mat-form-field appearance="outline" class="department" subscriptSizing="dynamic">
+      <mat-label>Department</mat-label>
+      <mat-select [value]="departmentId() ?? null" (valueChange)="chooseDepartment($event)">
+        <mat-option [value]="null">All departments</mat-option>
+        @for (department of departments.value(); track department.id) {
+          <mat-option [value]="department.id">{{ department.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+</div>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading the dashboard" />
+}
+
+@if (error(); as error) {
+  <div class="cf-alert cf-alert--error" role="alert">{{ error }}</div>
+}
+
+@if (summary(); as s) {
+  <div class="body" [class.stale]="loading()" [attr.aria-busy]="loading()">
+    <ul class="kpis" aria-label="Key figures">
+      @for (tile of tiles(); track tile.label) {
+        <li class="kpi" [class]="'kpi--' + tile.tone" [class.kpi--none]="tile.value === 0">
+          <span class="kpi-label">{{ tile.label }}</span>
+          <span class="kpi-value">{{ tile.value | number }}</span>
+          @if (tile.link; as link) {
+            <a class="kpi-link" [routerLink]="link.commands" [queryParams]="link.queryParams">
+              {{ link.text }}<span class="cf-visually-hidden">: {{ tile.value }} {{ tile.label | lowercase }}</span>
+            </a>
+          }
+        </li>
+      }
+    </ul>
+
+    <div class="charts">
+      <app-chart-panel
+        heading="Cases by status"
+        [config]="statusChart()"
+        [summary]="statusSummary()"
+        [height]="barChartHeight(s.casesByStatus.length)"
+        [plugins]="countLabels"
+      >
+        <table class="numbers">
+          <caption class="cf-visually-hidden">Cases by status</caption>
+          <thead>
+            <tr><th scope="col">Status</th><th scope="col" class="num">Cases</th></tr>
+          </thead>
+          <tbody>
+            @for (row of s.casesByStatus; track row.status) {
+              <tr>
+                <th scope="row">
+                  @if (statusLink(row.status); as params) {
+                    <a routerLink="/cases" [queryParams]="params">{{ statusLabel(row.status) }}</a>
+                  } @else {
+                    {{ statusLabel(row.status) }}
+                  }
+                </th>
+                <td class="num">{{ row.count | number }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-chart-panel>
+
+      <app-chart-panel
+        heading="Cases opened and closed, by week"
+        [config]="volumeChart()"
+        [summary]="volumeSummary()"
+        [legend]="volumeLegend"
+        [empty]="volumeEmpty()"
+      >
+        <table class="numbers">
+          <caption class="cf-visually-hidden">Cases opened and closed, by week</caption>
+          <thead>
+            <tr>
+              <th scope="col">Week starting</th>
+              <th scope="col" class="num">Opened</th>
+              <th scope="col" class="num">Closed</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (week of s.weeklyVolume; track week.weekStart) {
+              <tr>
+                <th scope="row">{{ shortDate(week.weekStart) }}</th>
+                <td class="num">{{ week.opened | number }}</td>
+                <td class="num">{{ week.closed | number }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-chart-panel>
+
+      @if (workload(); as workload) {
+        <app-chart-panel
+          heading="Workload"
+          [config]="workloadChart()"
+          [summary]="workloadSummary()"
+          [legend]="workloadLegend"
+          [height]="workloadHeight()"
+          [plugins]="countLabels"
+          [note]="workloadNote()"
+          [empty]="workloadEmpty()"
+        >
+          <table class="numbers">
+            <caption class="cf-visually-hidden">Active tasks per person</caption>
+            <thead>
+              <tr>
+                <th scope="col">Person</th>
+                @if (s.scope === 'Agency') {
+                  <th scope="col">Department</th>
+                }
+                <th scope="col" class="num">Active</th>
+                <th scope="col" class="num">Overdue</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (person of workload; track person.userId) {
+                <tr>
+                  <th scope="row">{{ person.fullName }}<span class="role"> · {{ person.role }}</span></th>
+                  @if (s.scope === 'Agency') {
+                    <td>{{ person.departmentName ?? '—' }}</td>
+                  }
+                  <td class="num">{{ person.activeTasks | number }}</td>
+                  <td class="num" [class.overdue]="person.overdueTasks > 0">{{ person.overdueTasks | number }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </app-chart-panel>
+      }
+
+      <app-chart-panel
+        heading="Time to close, last 90 days"
+        [config]="cycleTimeChart()"
+        [summary]="cycleTimeSummary()"
+        [height]="barChartHeight(cycleTimes().length)"
+        [plugins]="dayLabels"
+        note="Median days from opening to closing, by case type."
+        [empty]="cycleTimeEmpty()"
+      >
+        <table class="numbers">
+          <caption class="cf-visually-hidden">Time to close by case type, last 90 days</caption>
+          <thead>
+            <tr>
+              <th scope="col">Case type</th>
+              <th scope="col" class="num">Closed</th>
+              <th scope="col" class="num">Median</th>
+              <th scope="col" class="num">Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of cycleTimes(); track row.caseTypeId) {
+              <tr>
+                <th scope="row">{{ row.caseTypeName }}</th>
+                <td class="num">{{ row.closedCount | number }}</td>
+                <td class="num">{{ days(row.medianDays) }}</td>
+                <td class="num">{{ days(row.averageDays) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-chart-panel>
+    </div>
+  </div>
+}

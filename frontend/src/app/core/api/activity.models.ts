@@ -64,3 +64,18 @@ export interface UserLookup {
   departmentName: string | null;
   isActive: boolean;
 }
+
+/** Agency audit log filters, all optional. */
+export interface AuditQuery {
+  /** Case, WorkflowTask, Comment, Attachment, User, Department, CaseType… */
+  entityType?: string;
+  entityId?: string;
+  caseId?: number;
+  userId?: number;
+  action?: string;
+  /** yyyy-MM-dd, UTC, inclusive. */
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}

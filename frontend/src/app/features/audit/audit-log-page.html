@@ -1,0 +1,193 @@
+<div class="page-head">
+  <div>
+    <h1>Audit log</h1>
+    <p class="lede">
+      @if (isAdmin()) {
+        Every recorded change, including accounts, departments and case types. Entries are written automatically and can't be
+        edited.
+      } @else {
+        Changes to cases that involve your department. Entries are written automatically and can't be edited.
+      }
+    </p>
+  </div>
+</div>
+
+<section class="cf-panel" aria-labelledby="filters-heading">
+  <h2 id="filters-heading" class="cf-visually-hidden">Filters</h2>
+  <form [formGroup]="form" (ngSubmit)="applyFilters()" class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Changed by</mat-label>
+      <mat-select formControlName="userId">
+        <mat-option [value]="null">Anyone</mat-option>
+        @for (user of users.value(); track user.id) {
+          <mat-option [value]="user.id">
+            {{ user.fullName }}
+            @if (!user.isActive) {
+              <span class="option-note">· inactive</span>
+            }
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Record type</mat-label>
+      <mat-select formControlName="entityType">
+        <mat-option [value]="null">Any record</mat-option>
+        @for (type of entityTypes(); track type) {
+          <mat-option [value]="type">{{ entityTypeLabel(type) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Action</mat-label>
+      <mat-select formControlName="action">
+        <mat-option [value]="null">Any action</mat-option>
+        @for (action of actions; track action) {
+          <mat-option [value]="action">{{ actionLabel(action) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>From</mat-label>
+      <input matInput formControlName="from" type="date" />
+      <mat-hint>UTC</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>To</mat-label>
+      <input matInput formControlName="to" type="date" [min]="form.controls.from.value" />
+      <mat-hint>UTC, inclusive</mat-hint>
+    </mat-form-field>
+
+    <div class="form-actions">
+      <button mat-flat-button type="submit">Filter</button>
+      @if (filterCount()) {
+        <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+      }
+    </div>
+  </form>
+
+  @if (record(); as record) {
+    <p class="record-filter">
+      Showing the history of <strong>{{ record }}</strong> only.
+      <button mat-button type="button" (click)="showAllRecords()">Show all records</button>
+    </p>
+  }
+</section>
+
+<section class="cf-panel results" aria-labelledby="entries-heading">
+  <div class="results-head">
+    <h2 id="entries-heading">Entries</h2>
+    <p class="count" role="status">
+      @if (entries.isLoading() && !page()) {
+        Loading…
+      } @else if (page(); as page) {
+        {{ page.totalCount }} {{ page.totalCount === 1 ? 'entry' : 'entries' }}
+        @if (filterCount()) {
+          {{ page.totalCount === 1 ? 'matches' : 'match' }} {{ filterCount() === 1 ? 'this filter' : 'these ' + filterCount() + ' filters' }}
+        }
+      }
+    </p>
+  </div>
+
+  @if (entries.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading entries" />
+  }
+
+  @if (error(); as error) {
+    <div class="cf-alert cf-alert--error" role="alert">{{ error }}</div>
+  }
+
+  @if (page(); as page) {
+    <div class="table-scroll" tabindex="0" role="region" aria-labelledby="entries-heading" [attr.aria-busy]="entries.isLoading()">
+      <table mat-table [dataSource]="page.items">
+        <caption class="cf-visually-hidden">Audit entries, newest first</caption>
+
+        <ng-container matColumnDef="timestamp">
+          <th mat-header-cell *matHeaderCellDef>When</th>
+          <td mat-cell *matCellDef="let row" class="nowrap">
+            <time [attr.datetime]="row.timestamp">{{ row.timestamp | date: 'MMM d, y' }}</time>
+            <div class="sub">{{ row.timestamp | date: 'h:mm:ss a' }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>Changed by</th>
+          <td mat-cell *matCellDef="let row">{{ row.userName ?? 'System' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="action">{{ actionLabel(row.action) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="record">
+          <th mat-header-cell *matHeaderCellDef>Record</th>
+          <td mat-cell *matCellDef="let row">
+            <a
+              routerLink="/audit"
+              [queryParams]="{ entityType: row.entityType, entityId: row.entityId }"
+              [attr.aria-label]="'History of ' + entityTypeLabel(row.entityType) + ' ' + row.entityId"
+              >{{ entityTypeLabel(row.entityType) }} #{{ row.entityId }}</a
+            >
+            @if (row.caseNumber) {
+              <div class="sub">
+                on <a [routerLink]="['/cases', row.caseId]">{{ row.caseNumber }}</a>
+              </div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="changes">
+          <th mat-header-cell *matHeaderCellDef>Changes</th>
+          <td mat-cell *matCellDef="let row" class="changes">
+            @if (changeCount(row)) {
+              <details>
+                <summary>
+                  {{ changeCount(row) }} {{ changeCount(row) === 1 ? 'value' : 'values' }}<span class="cf-visually-hidden">
+                    changed on {{ entityTypeLabel(row.entityType) }} #{{ row.entityId }}</span
+                  >
+                </summary>
+                <dl>
+                  @for (change of changesOf(row); track change.key) {
+                    <div>
+                      <dt>{{ humanize(change.key) }}</dt>
+                      <dd>
+                        @if (change.value.old !== null) {
+                          <del>{{ change.value.old }}</del> →
+                        }
+                        {{ change.value.new ?? '(none)' }}
+                      </dd>
+                    </div>
+                  }
+                </dl>
+              </details>
+            } @else {
+              <span class="sub">None recorded</span>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        <tr class="mat-mdc-row" *matNoDataRow>
+          <td class="mat-mdc-cell empty" [attr.colspan]="columns.length">No entries match. Try fewer filters.</td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="page.totalCount"
+      [pageIndex]="page.page - 1"
+      [pageSize]="page.pageSize"
+      [pageSizeOptions]="pageSizes"
+      (page)="changePage($event)"
+      aria-label="Audit log pages"
+    />
+  }
+</section>

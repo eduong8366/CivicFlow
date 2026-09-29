@@ -1,8 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guards';
+import { unsavedChangesGuard } from './core/unsaved-changes.guard';
 import { Shell } from './layout/shell';
-
-const planned = () => import('./features/status/status-pages').then((m) => m.PlannedPage);
 
 export const routes: Routes = [
   {
@@ -52,16 +51,40 @@ export const routes: Routes = [
         path: 'audit',
         title: 'Audit log',
         canActivate: [roleGuard('Supervisor', 'Admin')],
-        loadComponent: planned,
-        data: { milestone: 'M12' },
+        loadComponent: () => import('./features/audit/audit-log-page').then((m) => m.AuditLogPage),
       },
       {
         path: 'admin',
         canActivate: [roleGuard('Admin')],
         children: [
-          { path: 'users', title: 'Users', loadComponent: planned, data: { milestone: 'M12' } },
-          { path: 'departments', title: 'Departments', loadComponent: planned, data: { milestone: 'M12' } },
-          { path: 'case-types', title: 'Case types', loadComponent: planned, data: { milestone: 'M12' } },
+          {
+            path: 'users',
+            title: 'Users',
+            loadComponent: () => import('./features/admin/users/users-page').then((m) => m.UsersPage),
+          },
+          {
+            path: 'departments',
+            title: 'Departments',
+            loadComponent: () => import('./features/admin/departments/departments-page').then((m) => m.DepartmentsPage),
+          },
+          {
+            path: 'case-types',
+            title: 'Case types',
+            loadComponent: () => import('./features/admin/case-types/case-types-page').then((m) => m.CaseTypesPage),
+          },
+          {
+            path: 'case-types/new',
+            title: 'New case type',
+            loadComponent: () => import('./features/admin/case-types/case-type-designer').then((m) => m.CaseTypeDesigner),
+            canDeactivate: [unsavedChangesGuard],
+          },
+          {
+            // The page retitles itself with the type's name once it loads.
+            path: 'case-types/:id',
+            title: 'Case type',
+            loadComponent: () => import('./features/admin/case-types/case-type-designer').then((m) => m.CaseTypeDesigner),
+            canDeactivate: [unsavedChangesGuard],
+          },
           { path: '', pathMatch: 'full', redirectTo: 'users' },
         ],
       },

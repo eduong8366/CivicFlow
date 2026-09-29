@@ -1,0 +1,120 @@
+// Shared by the administration list pages: a heading row, a notice, and a bordered table panel.
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lede {
+  margin: 6px 0 0;
+  color: var(--cf-muted);
+}
+
+.results {
+  padding: 0;
+
+  > .cf-alert {
+    margin: 0 24px 16px;
+  }
+}
+
+.results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 16px 24px 12px;
+
+  h2 {
+    font-size: 1.125rem;
+  }
+}
+
+.count {
+  margin: 0;
+  color: var(--cf-muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+th.mat-mdc-header-cell {
+  font-weight: 700;
+  color: var(--cf-ink);
+  background: var(--cf-ground);
+}
+
+td.mat-mdc-cell {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  vertical-align: top;
+}
+
+.name {
+  font-weight: 700;
+}
+
+.sub {
+  font-size: 0.8125rem;
+  color: var(--cf-muted);
+}
+
+.number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.row-inactive td {
+  color: var(--cf-muted);
+}
+
+// Active / inactive, readable without colour.
+.state {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &--active {
+    color: #00631b; // 7.5:1 on white
+  }
+
+  &--inactive {
+    color: var(--cf-muted);
+    border-style: dashed;
+  }
+}
+
+.actions {
+  white-space: nowrap;
+  text-align: right;
+
+  > * + * {
+    margin-left: 8px;
+  }
+}
+
+.empty {
+  padding: 24px;
+  color: var(--cf-muted);
+}

@@ -1,28 +1,5 @@
-import { Component, inject, input } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-
-/** Stands in for a screen a later milestone builds, so the navigation works end to end now. */
-@Component({
-  selector: 'app-planned-page',
-  template: `
-    <h1>{{ title }}</h1>
-    <div class="cf-alert cf-alert--info planned">
-      This screen is planned for milestone {{ milestone() }}. The API behind it is ready.
-    </div>
-  `,
-  styles: `
-    .planned {
-      margin-top: 20px;
-      max-width: 640px;
-    }
-  `,
-})
-export class PlannedPage {
-  protected readonly title = inject(ActivatedRoute).snapshot.title ?? '';
-
-  /** From the route's `data`. */
-  readonly milestone = input.required<string>();
-}
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-forbidden-page',

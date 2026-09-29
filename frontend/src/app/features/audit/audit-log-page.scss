@@ -1,0 +1,68 @@
+@use '../admin/admin-pages';
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.option-note {
+  color: var(--cf-muted);
+  font-size: 0.875rem;
+}
+
+.record-filter {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--cf-border);
+}
+
+table {
+  min-width: 820px;
+}
+
+.action {
+  font-weight: 600;
+}
+
+.changes {
+  min-width: 280px;
+
+  summary {
+    cursor: pointer;
+    color: var(--cf-accent);
+  }
+
+  dl {
+    margin: 6px 0 0;
+    font-size: 0.875rem;
+  }
+
+  dl > div {
+    display: grid;
+    grid-template-columns: minmax(96px, auto) 1fr;
+    gap: 8px;
+    padding: 2px 0;
+  }
+
+  dt {
+    color: var(--cf-muted);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  del {
+    color: var(--cf-muted);
+  }
+}

@@ -1,0 +1,297 @@
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a routerLink="/admin/case-types">Case types</a> <span aria-hidden="true">›</span>
+  {{ isNew() ? 'New case type' : (loaded()?.name ?? 'Case type') }}
+</nav>
+<h1>{{ isNew() ? 'New case type' : (loaded()?.name ?? 'Case type') }}</h1>
+
+<div class="cf-visually-hidden" aria-live="polite">{{ announcement() }}</div>
+
+@if (loadError(); as loadError) {
+  <div class="cf-alert cf-alert--error" role="alert">
+    {{ loadError }} <a routerLink="/admin/case-types">Back to case types</a>
+  </div>
+} @else if (!ready()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading the case type" />
+} @else {
+  @let f = form();
+
+  @if (notice(); as notice) {
+    <div #noticeBox class="cf-alert cf-alert--success" role="status" tabindex="-1">{{ notice }}</div>
+  }
+
+  @if (errors().length || failure()) {
+    <div #errorSummary class="cf-alert cf-alert--error summary" role="alert" tabindex="-1">
+      @if (failure(); as failure) {
+        <p>{{ failure }}</p>
+      } @else {
+        <h2>Fix {{ errors().length === 1 ? 'this problem' : 'these ' + errors().length + ' problems' }} to save</h2>
+        <ul>
+          @for (error of errors(); track $index) {
+            <li>
+              @if (error.id) {
+                <a [href]="'#' + error.id" (click)="focusField($event, error.id)">{{ error.message }}</a>
+              } @else {
+                {{ error.message }}
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  @if (loaded(); as type) {
+    @if (type.caseCount) {
+      <div class="cf-alert cf-alert--info in-use-note">
+        {{ type.caseCount }} {{ type.caseCount === 1 ? 'case uses' : 'cases use' }} this type. Cases already open keep their steps'
+        names, order and departments; changes to a step's SLA and outcomes apply when it next runs. Fields and steps marked
+        <strong>In use</strong> can't be removed.
+      </div>
+    }
+  }
+
+  <form [formGroup]="f" (ngSubmit)="save()" novalidate>
+    <section class="cf-panel" aria-labelledby="details-heading">
+      <h2 id="details-heading">Details</h2>
+      <div class="grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="span-2">
+          <mat-label>Name</mat-label>
+          <input matInput id="type-name" formControlName="name" maxlength="100" required />
+          <mat-hint>As staff see it when opening a case, e.g. Building Permit Application</mat-hint>
+          <mat-error>{{ message(f.controls.name, 'Name') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Prefix</mat-label>
+          <input matInput id="type-prefix" formControlName="prefix" maxlength="10" required class="upper" />
+          <mat-hint>Starts each case number: {{ (f.controls.prefix.value.trim() || 'BLD').toUpperCase() }}-2026-000001</mat-hint>
+          <mat-error>{{ message(f.controls.prefix, 'Prefix', prefixWording) }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="span-all">
+          <mat-label>Description</mat-label>
+          <textarea matInput id="type-description" formControlName="description" rows="2" maxlength="500"></textarea>
+          <mat-hint>Helps staff choose the right type.</mat-hint>
+          <mat-error>{{ message(f.controls.description, 'Description') }}</mat-error>
+        </mat-form-field>
+
+        <div class="span-all">
+          <mat-checkbox formControlName="isActive" aria-describedby="active-hint">Active</mat-checkbox>
+          <p id="active-hint" class="hint">Only active types can be chosen for new cases. Existing cases carry on either way.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cf-panel" aria-labelledby="fields-heading">
+      <div class="section-head">
+        <h2 id="fields-heading">Form fields</h2>
+        <span class="count">{{ f.controls.fields.length }} of {{ maxFields }}</span>
+      </div>
+      <p class="lede">
+        What the New case form asks for, after the standard case and requester details. Drag a row, or use its move buttons, to
+        change the order.
+      </p>
+
+      <ol class="rows" cdkDropList (cdkDropListDropped)="drop('fields', $event)" aria-labelledby="fields-heading">
+        @for (field of f.controls.fields.controls; track field; let i = $index, first = $first, last = $last) {
+          @let c = field.controls;
+          <li class="row" cdkDrag cdkDragLockAxis="y" [attr.aria-label]="'Field ' + (i + 1) + (c.label.value ? ': ' + c.label.value : '')">
+            <div class="row-head">
+              <span class="handle" cdkDragHandle title="Drag to reorder" aria-hidden="true">⠿</span>
+              <span class="position">Field {{ i + 1 }}</span>
+              @if (c.inUse.value) {
+                <span class="in-use" [id]="'field-' + i + '-in-use'" title="Existing cases have values for this field">
+                  In use<span class="cf-visually-hidden">: existing cases have values for this field, so it can't be removed or change type</span>
+                </span>
+              }
+              <span class="row-actions">
+                <button mat-button type="button" [id]="'field-' + i + '-up'" [disabled]="first" (click)="move('fields', i, i - 1)">
+                  Move up<span class="cf-visually-hidden"> field {{ i + 1 }}</span>
+                </button>
+                <button mat-button type="button" [id]="'field-' + i + '-down'" [disabled]="last" (click)="move('fields', i, i + 1)">
+                  Move down<span class="cf-visually-hidden"> field {{ i + 1 }}</span>
+                </button>
+                <button
+                  mat-button
+                  type="button"
+                  class="remove"
+                  [disabled]="c.inUse.value"
+                  [attr.aria-describedby]="c.inUse.value ? 'field-' + i + '-in-use' : null"
+                  (click)="remove('fields', i)"
+                >
+                  Remove<span class="cf-visually-hidden"> field {{ i + 1 }}</span>
+                </button>
+              </span>
+            </div>
+
+            <div class="grid">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Label</mat-label>
+                <input matInput [id]="'field-' + i + '-label'" [formControl]="c.label" maxlength="100" required />
+                <mat-error>{{ message(c.label, 'Label') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Key</mat-label>
+                <input matInput [id]="'field-' + i + '-key'" [formControl]="c.key" maxlength="50" required class="mono" />
+                <mat-hint>Used in the API and exports</mat-hint>
+                <mat-error>{{ message(c.key, 'Key', keyWording) }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Type</mat-label>
+                <mat-select [id]="'field-' + i + '-type'" [formControl]="c.dataType">
+                  @for (type of fieldTypes; track type) {
+                    <mat-option [value]="type">{{ type }}</mat-option>
+                  }
+                </mat-select>
+                @if (c.inUse.value) {
+                  <mat-hint>Fixed: cases have values</mat-hint>
+                }
+                <mat-error>{{ message(c.dataType, 'Type') }}</mat-error>
+              </mat-form-field>
+
+              <div class="required">
+                <mat-checkbox [formControl]="c.isRequired">{{ c.dataType.value === 'Checkbox' ? 'Must be ticked' : 'Required' }}</mat-checkbox>
+              </div>
+
+              @if (c.dataType.value === 'Select') {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="span-all">
+                  <mat-label>Options</mat-label>
+                  <textarea matInput [id]="'field-' + i + '-options'" [formControl]="c.options" rows="3"></textarea>
+                  <mat-hint>One per line, in the order to show them</mat-hint>
+                  <mat-error>{{ message(c.options, 'Options') }}</mat-error>
+                </mat-form-field>
+              }
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">No custom fields. The form will ask only for the standard case and requester details.</li>
+        }
+      </ol>
+
+      <button mat-stroked-button type="button" id="add-field" [disabled]="f.controls.fields.length >= maxFields" (click)="addField()">
+        Add field
+      </button>
+    </section>
+
+    <section class="cf-panel" aria-labelledby="steps-heading">
+      <div class="section-head">
+        <h2 id="steps-heading">Workflow steps</h2>
+        <span class="count">{{ f.controls.steps.length }} of {{ maxSteps }} · {{ totalSla() }} days in total</span>
+      </div>
+      <p class="lede">
+        Cases go through these in order. Each step waits in its department's queue until someone claims it, and is due its SLA
+        days after it starts.
+      </p>
+
+      <ol class="rows" cdkDropList (cdkDropListDropped)="drop('steps', $event)" aria-labelledby="steps-heading">
+        @for (step of f.controls.steps.controls; track step; let i = $index, first = $first, last = $last) {
+          @let c = step.controls;
+          <li class="row" cdkDrag cdkDragLockAxis="y" [attr.aria-label]="'Step ' + (i + 1) + (c.name.value ? ': ' + c.name.value : '')">
+            <div class="row-head">
+              <span class="handle" cdkDragHandle title="Drag to reorder" aria-hidden="true">⠿</span>
+              <span class="position">Step {{ i + 1 }}</span>
+              @if (c.inUse.value) {
+                <span class="in-use" [id]="'step-' + i + '-in-use'" title="Existing cases have tasks for this step">
+                  In use<span class="cf-visually-hidden">: existing cases have tasks for this step, so it can't be removed</span>
+                </span>
+              }
+              <span class="row-actions">
+                <button mat-button type="button" [id]="'step-' + i + '-up'" [disabled]="first" (click)="move('steps', i, i - 1)">
+                  Move up<span class="cf-visually-hidden"> step {{ i + 1 }}</span>
+                </button>
+                <button mat-button type="button" [id]="'step-' + i + '-down'" [disabled]="last" (click)="move('steps', i, i + 1)">
+                  Move down<span class="cf-visually-hidden"> step {{ i + 1 }}</span>
+                </button>
+                <button
+                  mat-button
+                  type="button"
+                  class="remove"
+                  [disabled]="c.inUse.value || f.controls.steps.length === 1"
+                  [attr.aria-describedby]="c.inUse.value ? 'step-' + i + '-in-use' : null"
+                  (click)="remove('steps', i)"
+                >
+                  Remove<span class="cf-visually-hidden"> step {{ i + 1 }}</span>
+                </button>
+              </span>
+            </div>
+
+            <div class="grid">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Name</mat-label>
+                <input matInput [id]="'step-' + i + '-name'" [formControl]="c.name" maxlength="100" required />
+                <mat-error>{{ message(c.name, 'Name') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Department</mat-label>
+                <mat-select [id]="'step-' + i + '-department'" [formControl]="c.departmentId" required>
+                  @for (department of departmentChoices(c.departmentId.value); track department.id) {
+                    <mat-option [value]="department.id">
+                      {{ department.name }}
+                      @if (!department.isActive) {
+                        <span class="option-note">· inactive</span>
+                      }
+                    </mat-option>
+                  }
+                </mat-select>
+                @if (isInactiveDepartment(c.departmentId.value)) {
+                  <mat-hint class="warn">Inactive: choose an active department to keep this type active</mat-hint>
+                } @else {
+                  <mat-hint>Its queue gets this step</mat-hint>
+                }
+                <mat-error>{{ message(c.departmentId, 'Department') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>SLA days</mat-label>
+                <input matInput [id]="'step-' + i + '-sla'" [formControl]="c.slaDays" type="number" min="0" max="365" step="1" required />
+                <mat-hint>0 for no due date</mat-hint>
+                <mat-error>{{ message(c.slaDays, 'SLA days', slaWording) }}</mat-error>
+              </mat-form-field>
+
+              <fieldset class="outcomes span-all" [id]="'step-' + i + '-outcomes'">
+                <legend>Allowed outcomes</legend>
+                <div class="outcome-list">
+                  @for (outcome of outcomes; track outcome) {
+                    @let unavailable = first && outcome === 'Return';
+                    <mat-checkbox
+                      [checked]="c.allowedOutcomes.value.includes(outcome)"
+                      [disabled]="unavailable"
+                      (change)="toggleOutcome(step, outcome, $event.checked)"
+                    >
+                      {{ outcomeLabel(outcome) }}
+                      @if (unavailable) {
+                        <span class="cf-visually-hidden">(not available on the first step)</span>
+                      }
+                    </mat-checkbox>
+                  }
+                </div>
+                @if (c.allowedOutcomes.touched && c.allowedOutcomes.invalid) {
+                  <div class="field-error">{{ message(c.allowedOutcomes, 'Outcomes') }}</div>
+                }
+              </fieldset>
+            </div>
+          </li>
+        }
+      </ol>
+
+      <p class="hint outcome-help">
+        Complete and Approve move the case to the next step, or close it after the last one. Reject closes it as rejected. Return
+        sends it back to the step before, so the first step can't return. Request info keeps the step open while waiting.
+      </p>
+
+      <button mat-stroked-button type="button" id="add-step" [disabled]="f.controls.steps.length >= maxSteps" (click)="addStep()">
+        Add step
+      </button>
+    </section>
+
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : isNew() ? 'Create case type' : 'Save changes' }}
+      </button>
+      <a mat-stroked-button routerLink="/admin/case-types">{{ f.dirty ? 'Cancel' : 'Back to case types' }}</a>
+    </div>
+  </form>
+}

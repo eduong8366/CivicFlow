@@ -1,5 +1,7 @@
 # CivicFlow
 
+[![CI](https://github.com/eduong8366/civicflow/actions/workflows/ci.yml/badge.svg)](https://github.com/eduong8366/civicflow/actions/workflows/ci.yml)
+
 A case and workflow management system modelled on the platforms government agencies use to track permits, complaints, records requests and service tickets. Administrators define case types with custom form fields and multi-step workflows. Cases move through department queues with role-based access, SLA tracking, and a full audit trail.
 
 ![Agency dashboard](docs/screenshots/dashboard.png)

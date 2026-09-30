@@ -23,7 +23,7 @@ appsettings.*.local.json
 # Local file-attachment storage (runtime data, never committed)
 backend/**/App_Data/
 backend/**/uploads/
-storage/
+/storage/
 
 # ---------- Node / Angular ----------
 node_modules/

@@ -48,7 +48,7 @@ export interface CaseSearchQuery {
   departmentId?: number;
   /** Cases whose active task is assigned to this user. */
   assigneeId?: number;
-  /** yyyy-MM-dd, UTC, inclusive. */
+  /** yyyy-MM-dd, Pacific time, inclusive. */
   createdFrom?: string;
   createdTo?: string;
   overdue?: boolean;

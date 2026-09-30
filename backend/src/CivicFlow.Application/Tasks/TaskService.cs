@@ -133,7 +133,7 @@ public sealed class TaskService(
     private Task<PagedResult<TaskListItemDto>> ToPagedListAsync(
         IQueryable<WorkflowTask> tasks, PageQuery page, CancellationToken cancellationToken)
     {
-        var today = timeProvider.GetUtcToday();
+        var today = timeProvider.GetToday();
 
         return tasks
             .AsNoTracking()

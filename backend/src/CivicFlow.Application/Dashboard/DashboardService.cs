@@ -30,7 +30,7 @@ public sealed class DashboardService(ICivicFlowDbContext db, ICurrentUser curren
         }
 
         var now = timeProvider.GetUtcNow();
-        var today = timeProvider.GetUtcToday();
+        var today = timeProvider.GetToday();
         var cases = db.Cases.AsNoTracking().Where(CasesInScope(scope, actor.UserId, departmentId));
 
         var statusCounts = await cases
@@ -40,7 +40,7 @@ public sealed class DashboardService(ICivicFlowDbContext db, ICurrentUser curren
 
         var open = cases.Where(c => c.Status == CaseStatus.Open || c.Status == CaseStatus.InProgress || c.Status == CaseStatus.OnHold);
         var weekAhead = today.AddDays(7);
-        var monthStart = new DateTimeOffset(today.Year, today.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var monthStart = AgencyTime.StartOfDay(new DateOnly(today.Year, today.Month, 1));
 
         var kpis = new DashboardKpisDto(
             OpenCases: await open.CountAsync(cancellationToken),
@@ -173,7 +173,7 @@ public sealed class DashboardService(ICivicFlowDbContext db, ICurrentUser curren
         IQueryable<Case> cases, DateOnly today, CancellationToken cancellationToken)
     {
         var firstWeek = StartOfWeek(today).AddDays(-7 * (VolumeWeeks - 1));
-        var from = new DateTimeOffset(firstWeek.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var from = AgencyTime.StartOfDay(firstWeek);
 
         var opened = await cases.Where(c => c.CreatedAt >= from).Select(c => c.CreatedAt).ToListAsync(cancellationToken);
         var closed = await cases
@@ -189,6 +189,6 @@ public sealed class DashboardService(ICivicFlowDbContext db, ICurrentUser curren
             .Select(week => new WeeklyVolumeDto(week, openedByWeek.GetValueOrDefault(week), closedByWeek.GetValueOrDefault(week)))
             .ToList();
 
-        static DateOnly WeekOf(DateTimeOffset instant) => StartOfWeek(DateOnly.FromDateTime(instant.UtcDateTime));
+        static DateOnly WeekOf(DateTimeOffset instant) => StartOfWeek(AgencyTime.DateOf(instant));
     }
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using CivicFlow.Application.Common;
 using CivicFlow.Application.Dashboard;
 using CivicFlow.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ public class DashboardEndpointTests(CivicFlowApiFactory factory)
 
         var summary = await GetSummaryAsync(admin);
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = AgencyTime.DateOf(DateTimeOffset.UtcNow);
         await using var db = factory.CreateDbContext();
         Assert.Equal(DashboardScope.Agency, summary.Scope);
         Assert.Null(summary.DepartmentId);

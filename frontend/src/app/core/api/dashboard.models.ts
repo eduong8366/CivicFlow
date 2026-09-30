@@ -4,7 +4,7 @@ import { CaseStatus } from './cases.models';
 /** Whose work a dashboard covers: staff see their own, supervisors their department, admins the agency. */
 export type DashboardScope = 'Personal' | 'Department' | 'Agency';
 
-/** `GET /api/dashboard/summary`. Dates are UTC days (`yyyy-MM-dd`). */
+/** `GET /api/dashboard/summary`. Dates are Pacific-time days (`yyyy-MM-dd`). */
 export interface DashboardSummary {
   scope: DashboardScope;
   departmentId: number | null;

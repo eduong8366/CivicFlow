@@ -43,7 +43,7 @@ public sealed class WorkflowEngine(TimeProvider timeProvider)
         @case.Status = CaseStatus.Open;
         @case.Resolution = null;
         @case.CreatedAt = timeProvider.GetUtcNow();
-        @case.DueDate = timeProvider.GetUtcToday().AddDays(ordered.Sum(s => s.SlaDays));
+        @case.DueDate = timeProvider.GetToday().AddDays(ordered.Sum(s => s.SlaDays));
         @case.Tasks = ordered
             .Select(step => new WorkflowTask
             {
@@ -218,7 +218,7 @@ public sealed class WorkflowEngine(TimeProvider timeProvider)
         task.Outcome = null;
         task.StartedAt = timeProvider.GetUtcNow();
         task.CompletedAt = null;
-        task.DueDate = timeProvider.GetUtcToday().AddDays(task.StepTemplate.SlaDays);
+        task.DueDate = timeProvider.GetToday().AddDays(task.StepTemplate.SlaDays);
     }
 
     /// <summary>

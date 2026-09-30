@@ -67,10 +67,10 @@ public sealed class CaseSearchQuery : PageQuery
     /// <summary>Cases whose active task is assigned to this user.</summary>
     public int? AssigneeId { get; set; }
 
-    /// <summary>Created on or after this date (UTC).</summary>
+    /// <summary>Created on or after this date (Pacific time).</summary>
     public DateOnly? CreatedFrom { get; set; }
 
-    /// <summary>Created on or before this date (UTC).</summary>
+    /// <summary>Created on or before this date (Pacific time).</summary>
     public DateOnly? CreatedTo { get; set; }
 
     /// <summary>Unfinished cases past their due date (true) or not (false).</summary>

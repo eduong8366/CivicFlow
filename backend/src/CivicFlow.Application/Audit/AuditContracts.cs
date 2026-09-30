@@ -36,10 +36,10 @@ public sealed class AuditQuery : PageQuery
     /// <summary>An action from <see cref="AuditActions"/>, e.g. Created, Claimed or Approved.</summary>
     public string? Action { get; set; }
 
-    /// <summary>On or after this date (UTC).</summary>
+    /// <summary>On or after this date (Pacific time).</summary>
     public DateOnly? From { get; set; }
 
-    /// <summary>On or before this date (UTC).</summary>
+    /// <summary>On or before this date (Pacific time).</summary>
     public DateOnly? To { get; set; }
 }
 

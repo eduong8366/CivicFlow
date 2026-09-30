@@ -1,7 +1,7 @@
 <div class="page-head">
   <div>
     @if (summary(); as s) {
-      <p class="as-of">As of {{ s.asOf | date: 'EEEE, MMMM d, y' }} (UTC)</p>
+      <p class="as-of">As of {{ s.asOf | date: 'EEEE, MMMM d, y' }} (Pacific time)</p>
     }
     <h1>{{ heading() }}</h1>
     @if (lede()) {

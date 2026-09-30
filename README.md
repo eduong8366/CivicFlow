@@ -24,7 +24,7 @@ A case and workflow management system modelled on the platforms government agenc
 | Backend | ASP.NET Core Web API (.NET 10), EF Core 10, FluentValidation |
 | Database | SQL Server (LocalDB for development) |
 | Auth | JWT bearer tokens, policy-based and resource-based authorization |
-| Tests | xUnit unit and `WebApplicationFactory` integration tests (202), Vitest component and unit tests (176) |
+| Tests | xUnit unit and `WebApplicationFactory` integration tests, Vitest component and unit tests |
 | CI | GitHub Actions: backend against a SQL Server container, frontend build and tests |
 
 ## Documentation

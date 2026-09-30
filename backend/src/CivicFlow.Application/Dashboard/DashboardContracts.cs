@@ -25,7 +25,7 @@ public sealed class DashboardQuery
 }
 
 /// <summary>
-/// The dashboard's tiles and charts. Dates are UTC days, like due dates. <see cref="Workload"/> is
+/// The dashboard's tiles and charts. Dates are Pacific days, like due dates. <see cref="Workload"/> is
 /// null on a personal dashboard.
 /// </summary>
 public sealed record DashboardSummaryDto(

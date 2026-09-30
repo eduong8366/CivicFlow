@@ -73,7 +73,7 @@ export interface AuditQuery {
   caseId?: number;
   userId?: number;
   action?: string;
-  /** yyyy-MM-dd, UTC, inclusive. */
+  /** yyyy-MM-dd, Pacific time, inclusive. */
   from?: string;
   to?: string;
   page?: number;

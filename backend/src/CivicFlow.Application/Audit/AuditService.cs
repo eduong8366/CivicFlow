@@ -75,13 +75,13 @@ public sealed class AuditService(
 
         if (query.From is { } from)
         {
-            var start = StartOfDay(from);
+            var start = AgencyTime.StartOfDay(from);
             entries = entries.Where(a => a.Timestamp >= start);
         }
 
         if (query.To is { } to)
         {
-            var end = StartOfDay(to.AddDays(1));
+            var end = AgencyTime.StartOfDay(to.AddDays(1));
             entries = entries.Where(a => a.Timestamp < end);
         }
 
@@ -123,6 +123,4 @@ public sealed class AuditService(
                 .ToList(),
             page.Page, page.PageSize, page.TotalCount);
     }
-
-    private static DateTimeOffset StartOfDay(DateOnly date) => new(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 }

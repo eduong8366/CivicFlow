@@ -1,5 +1,6 @@
 using System.Globalization;
 using CivicFlow.Application.Abstractions;
+using CivicFlow.Application.Common;
 using CivicFlow.Domain.Entities;
 using CivicFlow.Domain.Enums;
 using CivicFlow.Infrastructure.Identity;
@@ -230,7 +231,7 @@ internal static class DevDataSeeder
         foreach (var (type, createdAt) in specs)
         {
             var @case = CreateCase(type, createdAt, now, users, rng);
-            @case.CaseNumber = await caseNumbers.NextAsync(type.Prefix, createdAt.Year, cancellationToken);
+            @case.CaseNumber = await caseNumbers.NextAsync(type.Prefix, AgencyTime.DateOf(createdAt).Year, cancellationToken);
             cases.Add(@case);
         }
 
@@ -487,7 +488,7 @@ internal static class DevDataSeeder
 
     private static string Address(Random rng) => $"{rng.Next(100, 10000)} {Pick(rng, Streets)}";
 
-    private static DateOnly ToDate(DateTimeOffset value) => DateOnly.FromDateTime(value.UtcDateTime);
+    private static DateOnly ToDate(DateTimeOffset value) => AgencyTime.DateOf(value);
 
     private static T Pick<T>(Random rng, IReadOnlyList<T> items) => items[rng.Next(items.Count)];
 

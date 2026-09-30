@@ -22,7 +22,7 @@ public sealed class CaseService(
     {
         await searchValidator.ValidateAndThrowAsync(query, cancellationToken);
         var actor = currentUser.RequireActor();
-        var today = timeProvider.GetUtcToday();
+        var today = timeProvider.GetToday();
 
         var cases = db.Cases.AsNoTracking().Where(WorkflowPermissions.CanView(actor));
 
@@ -53,13 +53,13 @@ public sealed class CaseService(
 
         if (query.CreatedFrom is { } from)
         {
-            var start = StartOfDay(from);
+            var start = AgencyTime.StartOfDay(from);
             cases = cases.Where(c => c.CreatedAt >= start);
         }
 
         if (query.CreatedTo is { } to)
         {
-            var end = StartOfDay(to.AddDays(1));
+            var end = AgencyTime.StartOfDay(to.AddDays(1));
             cases = cases.Where(c => c.CreatedAt < end);
         }
 
@@ -131,7 +131,7 @@ public sealed class CaseService(
             .Include(c => c.Tasks).ThenInclude(t => t.Assignee)
             .SingleAsync(c => c.Id == id, cancellationToken);
 
-        return ToDetail(@case, actor, timeProvider.GetUtcToday());
+        return ToDetail(@case, actor, timeProvider.GetToday());
     }
 
     public async Task<CaseDetailDto> CreateAsync(CreateCaseRequest request, CancellationToken cancellationToken = default)
@@ -161,7 +161,7 @@ public sealed class CaseService(
             FieldValues = fieldValues.Select(v => new CaseFieldValue { FieldId = v.Field.Id, Value = v.Value }).ToList(),
         };
         engine.Start(@case, caseType.Steps);
-        @case.CaseNumber = await caseNumbers.NextAsync(caseType.Prefix, @case.CreatedAt.Year, cancellationToken);
+        @case.CaseNumber = await caseNumbers.NextAsync(caseType.Prefix, AgencyTime.DateOf(@case.CreatedAt).Year, cancellationToken);
 
         db.Cases.Add(@case);
         await db.SaveChangesAsync(cancellationToken);
@@ -230,8 +230,6 @@ public sealed class CaseService(
         // A unique tiebreaker keeps paging stable.
         return descending ? ordered.ThenByDescending(c => c.Id) : ordered.ThenBy(c => c.Id);
     }
-
-    private static DateTimeOffset StartOfDay(DateOnly date) => new(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
 
     private static bool IsOverdue(CaseStatus status, DateOnly? dueDate, DateOnly today) =>
         status is not (CaseStatus.Closed or CaseStatus.Cancelled) && dueDate < today;

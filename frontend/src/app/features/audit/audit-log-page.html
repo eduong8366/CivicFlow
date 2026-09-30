@@ -53,13 +53,13 @@
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>From</mat-label>
       <input matInput formControlName="from" type="date" />
-      <mat-hint>UTC</mat-hint>
+      <mat-hint>Pacific time</mat-hint>
     </mat-form-field>
 
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>To</mat-label>
       <input matInput formControlName="to" type="date" [min]="form.controls.from.value" />
-      <mat-hint>UTC, inclusive</mat-hint>
+      <mat-hint>Pacific time, inclusive</mat-hint>
     </mat-form-field>
 
     <div class="form-actions">

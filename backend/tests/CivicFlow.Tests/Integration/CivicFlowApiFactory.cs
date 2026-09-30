@@ -13,11 +13,17 @@ namespace CivicFlow.Tests.Integration;
 /// Runs the real API in memory against its own LocalDB database, <c>CivicFlow_Tests</c>. The host
 /// runs as Development so startup migrates and seeds that database with the demo data, exactly
 /// as it does the dev database. The database is dropped once per test run so the seed is fresh.
+/// Set <c>CIVICFLOW_TEST_CONNECTION</c> to use another server, as CI does with a SQL Server container.
 /// </summary>
 public sealed class CivicFlowApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    public const string ConnectionString =
+    private const string LocalDbConnectionString =
         @"Server=(localdb)\MSSQLLocalDB;Database=CivicFlow_Tests;Trusted_Connection=True;TrustServerCertificate=True";
+
+    public static readonly string ConnectionString =
+        Environment.GetEnvironmentVariable("CIVICFLOW_TEST_CONNECTION") is { Length: > 0 } configured
+            ? configured
+            : LocalDbConnectionString;
 
     /// <summary>Every seeded account has this password.</summary>
     public const string DemoPassword = "CivicFlow!2026";

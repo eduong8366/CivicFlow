@@ -99,7 +99,7 @@
       } @else if (page(); as page) {
         {{ page.totalCount }} {{ page.totalCount === 1 ? 'case' : 'cases' }}
         @if (filterCount()) {
-          match {{ filterCount() === 1 ? 'this filter' : 'these ' + filterCount() + ' filters' }}
+          {{ page.totalCount === 1 ? 'matches' : 'match' }} {{ filterCount() === 1 ? 'this filter' : 'these ' + filterCount() + ' filters' }}
         }
       }
     </p>

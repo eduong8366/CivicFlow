@@ -87,6 +87,14 @@ describe('CaseSearchPage', () => {
     expect(page.querySelector<HTMLInputElement>('input[type="search"]')?.value).toBe('birch');
   });
 
+  it('words a single result in the singular', async () => {
+    const page = await open('/cases?overdue=true');
+    searchRequest().flush(pageOf([row()], { totalCount: 1 }));
+    await settle();
+
+    expect(page.querySelector('[role="status"]')?.textContent?.replace(/\s+/g, ' ')).toContain('1 case matches this filter');
+  });
+
   it('puts new filters in the URL and starts again from page 1', async () => {
     const page = await open('/cases?page=3');
     searchRequest().flush(pageOf([]));
